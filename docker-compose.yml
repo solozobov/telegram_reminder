@@ -1,0 +1,22 @@
+version: '3.1'
+
+secrets:
+  production.properties:
+    external: true
+
+services:
+  remember:
+    image: test
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: "1"
+          memory: 1024M
+      restart_policy:
+        condition: on-failure
+
+    secrets:
+      - source: production.properties
+        target: application.properties
+
