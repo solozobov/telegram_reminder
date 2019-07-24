@@ -1,5 +1,6 @@
-package com.solozobov.andrei;
+package com.solozobov.andrei.db;
 
+import com.solozobov.andrei.TelegramBot;
 import com.solozobov.andrei.db.NotificationRepository;
 import com.solozobov.andrei.db.dto.NotificationDto;
 import com.solozobov.andrei.utils.Threads;
@@ -21,7 +22,7 @@ public class NotificationSystem {
 
   private void run() {
     while(true) {
-      List<NotificationDto> notifications = notificationRepository.listExpiredNotifications();
+      final List<NotificationDto> notifications = notificationRepository.listExpiredNotifications();
       for (NotificationDto notification : notifications) {
         telegramBot.forward(notification.chatId, notification.messageId); // retries
       }

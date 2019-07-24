@@ -2,15 +2,15 @@ package com.solozobov.andrei.db;
 
 import com.solozobov.andrei.db.dto.NotificationDto;
 import org.jooq.DSLContext;
-import org.jooq.DatePart;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
+import java.time.*;
 import java.util.Collection;
 import java.util.List;
 
 import static com.solozobov.andrei.utils.Factory.map;
+import static org.jooq.DatePart.MINUTE;
 import static org.jooq.db.Tables.NOTIFICATIONS;
 import static org.jooq.impl.DSL.*;
 
@@ -22,16 +22,16 @@ public class NotificationRepository {
 
   private final DSLContext db;
 
-  public void create(long chatId, int messageId, LocalDateTime when) {
-    db.insertInto(NOTIFICATIONS, NOTIFICATIONS.CHAT_ID, NOTIFICATIONS.MESSAGE_ID, NOTIFICATIONS.TIME, NOTIFICATIONS.FORESTALL_MINUTES)
-      .values(chatId, messageId, when, 0)
+  public void create(long chatId, int messageId, LocalDateTime dateTimeUtc) {
+    db.insertInto(NOTIFICATIONS, NOTIFICATIONS.CHAT_ID, NOTIFICATIONS.MESSAGE_ID, NOTIFICATIONS.TIMESTAMP_UTC, NOTIFICATIONS.FORESTALL_MINUTES)
+      .values(chatId, messageId, dateTimeUtc, 0)
       .execute();
   }
 
   public List<NotificationDto> listExpiredNotifications() {
     return db.select(NOTIFICATIONS.ID, NOTIFICATIONS.CHAT_ID, NOTIFICATIONS.MESSAGE_ID)
       .from(NOTIFICATIONS)
-      .where(localDateTimeAdd(currentLocalDateTime(), NOTIFICATIONS.FORESTALL_MINUTES, DatePart.SECOND).ge(NOTIFICATIONS.TIME))
+      .where(localDateTimeAdd(LocalDateTime.ofInstant(Instant.now(), ZoneId.of("UTC")), NOTIFICATIONS.FORESTALL_MINUTES, MINUTE).ge(NOTIFICATIONS.TIMESTAMP_UTC))
       .fetchInto(NotificationDto.class);
   }
 

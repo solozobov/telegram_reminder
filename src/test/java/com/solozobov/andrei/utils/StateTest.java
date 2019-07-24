@@ -1,12 +1,13 @@
-package com.solozobov.andrei;
+package com.solozobov.andrei.utils;
 
+import com.solozobov.andrei.RemindException;
 import org.junit.Test;
 
 import java.time.LocalDate;
 
-import static com.solozobov.andrei.State.decode;
-import static com.solozobov.andrei.State.deserialize;
-import static com.solozobov.andrei.State.encode;
+import static com.solozobov.andrei.utils.State.decode;
+import static com.solozobov.andrei.utils.State.deserialize;
+import static com.solozobov.andrei.utils.State.encode;
 import static org.junit.Assert.*;
 
 /**

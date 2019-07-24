@@ -6,8 +6,6 @@ import org.springframework.context.annotation.ImportResource;
 import org.springframework.context.annotation.PropertySource;
 import org.telegram.telegrambots.ApiContextInitializer;
 
-import java.io.*;
-
 /**
  * solozobov on 03/12/2018
  */
@@ -16,7 +14,6 @@ import java.io.*;
 @ImportResource({"classpath:spring/domain.xml"})
 @ComponentScan
 public class Application {
-
   public static void main(String[] args) {
     ApiContextInitializer.init();
     SpringApplication.run(Application.class, args);

@@ -1,9 +1,7 @@
 package com.solozobov.andrei;
 
-import com.solozobov.andrei.db.UserRepository;
-import com.solozobov.andrei.logic.BotBrain;
-import com.solozobov.andrei.logic.ButtonAction;
-import com.solozobov.andrei.logic.MessageAction;
+import com.solozobov.andrei.utils.Exceptions;
+import com.solozobov.andrei.utils.State;
 import org.apache.http.client.config.RequestConfig;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -12,7 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.DefaultBotOptions;
-import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.api.methods.ForwardMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -23,27 +20,29 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
 
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
+import java.net.*;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
+
+import static java.util.Collections.list;
+import static java.util.Comparator.comparingInt;
 
 /**
  * solozobov on 09/12/2018
  * https://core.telegram.org/bots/api#inlinekeyboardbutton
  */
 @Component
-public class TelegramBot extends TelegramLongPollingBot {
+public class TelegramBot extends BaseBot {
 
-  private Logger LOG = LoggerFactory.getLogger(TelegramBot.class);
+  public static final String NO_ACTION_BUTTON = "_";
 
-  private final UserRepository userRepository;
+  private static final Logger LOG = LoggerFactory.getLogger(TelegramBot.class);
+
   private final String botName;
   private final String botToken;
-  private final BotBrain botBrain;
 
   @Override
   public String getBotUsername() {
@@ -57,32 +56,50 @@ public class TelegramBot extends TelegramLongPollingBot {
 
   @Override
   public void onUpdateReceived(Update update) {
+    try {
+      onInnerUpdateReceived(update);
+    } catch (Exception e) {
+      final TelegramApiRequestException tae = Exceptions.findCause(e, TelegramApiRequestException.class);
+      if (tae != null) {
+        LOG.error(tae.getApiResponse() + " " + tae.getErrorCode() + " " + tae.getParameters(), e);
+      } else {
+        LOG.error("", e);
+      }
+    }
+  }
+
+  private void onInnerUpdateReceived(Update update) {
     if (update.hasMessage()) {
       final Message message = update.getMessage();
       final Chat chat = message.getChat();
       if (chat.isUserChat()) {
-        userRepository.createOrUpdateUser(chat);
-        for (Map.Entry<String, MessageAction> entry : botBrain.getMessageActions().entrySet()) {
-          if (entry.getKey().equals(message.getText())) {
+        for (Map.Entry<String, MessageAction> entry : MessageAction.actions.entrySet()) {
+          if (entry.getKey() != null && entry.getKey().equals(message.getText())) {
             entry.getValue().perform(this, message);
             return;
           }
         }
-        botBrain.defaultMessageResponse(this, message);
+        MessageAction.actions.get(null).perform(this, message);
+      } else {
+        LOG.error("Not user chat " + update);
       }
     }
     else if (update.hasCallbackQuery()) {
       final CallbackQuery callback = update.getCallbackQuery();
       final Message message = callback.getMessage();
       final String buttonAction = callback.getData();
-      for (Map.Entry<String, ButtonAction> entry : botBrain.getButtonActions().entrySet()) {
-        final String actionPrefix = entry.getKey();
-        if (buttonAction.startsWith(actionPrefix)) {
-          entry.getValue().perform(this, message, buttonAction.substring(actionPrefix.length()));
+      if (NO_ACTION_BUTTON.equals(buttonAction)) {
+        return;
+      }
+
+      for (ButtonAction action : ButtonAction.actions) {
+        if (action.accepts(buttonAction)) {
+          action.perform(this, message, buttonAction);
           return;
         }
       }
-      botBrain.defaultButtonResponse(this, message, buttonAction);
+
+      LOG.error("Unknown button action '" + buttonAction + "'");
     }
   }
 
@@ -91,10 +108,14 @@ public class TelegramBot extends TelegramLongPollingBot {
   }
 
   public void write(long chatId, String text) {
+    write(chatId, text, null);
+  }
+
+  public void write(long chatId, String text, @Nullable InlineKeyboardMarkup keyboard) {
     try {
-      this.execute(new SendMessage(chatId, text));
+      this.execute(new SendMessage(chatId, text).setReplyMarkup(keyboard).enableMarkdown(true));
     } catch (TelegramApiException e) {
-      LOG.error("Failed sending message '" + text + "' to chat #" + chatId, e);
+      throw new RemindException(e, "Failed sending message '" + text + "' to chat #" + chatId);
     }
   }
 
@@ -102,7 +123,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     try {
       this.execute(new ForwardMessage(chatId, chatId, messageId));
     } catch (TelegramApiException e) {
-      LOG.error("Failed forwarding message #" + messageId + " to chat #" + chatId, e);
+      throw new RemindException(e, "Failed forwarding message #" + messageId + " to chat #" + chatId);
     }
   }
 
@@ -112,9 +133,11 @@ public class TelegramBot extends TelegramLongPollingBot {
           new SendMessage(message.getChatId(), text)
               .setReplyToMessageId(message.getMessageId())
               .setReplyMarkup(keyboard)
+              .enableMarkdown(true)
       );
     } catch (TelegramApiException e) {
-      LOG.error("Failed replying to message in chat #" + message.getChatId() + " with '" + text + "'" + (keyboard == null ? "" : " and keyboard"), e);
+      throw new RemindException(e,
+                                "Failed replying to message in chat #" + message.getChatId() + " with '" + text + "'" + (keyboard == null ? "" : " and keyboard"));
     }
   }
 
@@ -150,23 +173,41 @@ public class TelegramBot extends TelegramLongPollingBot {
               .setMessageId(message.getMessageId())
               .setText(state.serialize() + newMessageText)
               .setReplyMarkup(keyboard)
+              .enableMarkdown(true)
       );
     } catch (TelegramApiException e) {
-      LOG.error("Failed editing message in chat #" + message.getChatId() + (keyboard == null ? "" : " and keyboard"), e);
+      throw new RemindException(e,
+                                "Failed editing message in chat #" + message.getChatId() + (keyboard == null ? "" : " and keyboard"));
+    }
+  }
+
+  public void editMessage(Message message, String newMessageText) {
+    editMessage(message, newMessageText, null);
+  }
+
+  public void editMessage(Message message, String newMessageText, @Nullable InlineKeyboardMarkup keyboard) {
+    try {
+      this.execute(
+          new EditMessageText()
+              .setChatId(message.getChatId())
+              .setMessageId(message.getMessageId())
+              .setText(newMessageText)
+              .setReplyMarkup(keyboard)
+              .enableMarkdown(true)
+      );
+    } catch (TelegramApiException e) {
+      throw new RemindException(e,
+                                "Failed editing message in chat #" + message.getChatId() + (keyboard == null ? "" : " and keyboard"));
     }
   }
 
   @Autowired
   public TelegramBot(
-      BotBrain botBrain,
-      UserRepository userRepository,
       TelegramBotsApi telegramBotsApi,
-      @Value("remember.bot.name") String botName,
-      @Value("remember.bot.token") String botToken
+      @Value("${remember.bot.name}") String botName,
+      @Value("${remember.bot.token}") String botToken
   ) {
-    super(createOptions());
-    this.userRepository = userRepository;
-    this.botBrain = botBrain;
+    super(botName, botToken, createOptions(botName, botToken));
     this.botName = botName;
     this.botToken = botToken;
     try {
@@ -176,29 +217,64 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
   }
 
-  private static DefaultBotOptions createOptions() {
+  private static DefaultBotOptions createOptions(String botName, String botToken) {
     try {
-//      final Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
-//      while(interfaces.hasMoreElements()) {
-//        final NetworkInterface networkInterface = interfaces.nextElement();
-//        System.out.println(networkInterface);
-//        final Enumeration<InetAddress> addresses = networkInterface.getInetAddresses();
-//        while(addresses.hasMoreElements()) {
-//          System.out.println("  " + addresses.nextElement());
-//        }
-//      }
-      //final NetworkInterface networkInterface = NetworkInterface.getByName("en0");
-      final DefaultBotOptions options = new DefaultBotOptions();
-      final NetworkInterface networkInterface = NetworkInterface.getByName("utun1");
-      if (networkInterface == null) {
-        System.out.println("No VPN tunnel");
-      } else {
-        final InetAddress localAddress = networkInterface.getInetAddresses().nextElement();
-        options.setRequestConfig(RequestConfig.custom().setLocalAddress(localAddress).build());
-      }
-      return options;
+      final InetAddress inetAddress = list(NetworkInterface.getNetworkInterfaces())
+          .stream()
+          .filter(networkInterface -> {
+            try {
+              return !networkInterface.isLoopback();
+            } catch (SocketException e) {
+              throw new RemindException(e, "Failed to analyze " + networkInterface);
+            }
+          })
+          .sorted(comparingInt(i -> i.getName().contains("utun1") ? 0 : 1))
+          .flatMap(i -> list(i.getInetAddresses()).stream().sorted(comparingInt(a -> a instanceof Inet6Address ? 0 : 1)))
+          .filter(address -> check(botName, botToken, address))
+          .findFirst()
+          .orElseThrow(() -> new RemindException("No way to connect to Telegram"));
+
+      LOG.info("Using " + inetAddress);
+
+      return createOptions(inetAddress);
     } catch (SocketException e) {
       throw new RemindException(e);
     }
+  }
+
+  private static boolean check(String botName, String botToken, InetAddress address) {
+    LOG.info("Checking address " + address);
+    final long start = System.currentTimeMillis();
+    try (ConnectionTestBot bot = new ConnectionTestBot(botName, botToken, address)) {
+      bot.clearWebhook();
+    } catch (Exception e) {
+      LOG.info("Lost " + (System.currentTimeMillis() - start) + " millis");
+      return false;
+    }
+    return true;
+  }
+
+  private static class ConnectionTestBot extends BaseBot implements AutoCloseable {
+    ConnectionTestBot(String botName, String botToken, InetAddress address) {
+      super(botName, botToken, createOptions(RequestConfig.custom().setLocalAddress(address).setConnectTimeout(500)));
+    }
+
+    @Override
+    public void onUpdateReceived(Update update) {}
+
+    @Override
+    public void close() {
+      this.onClosing();
+    }
+  }
+
+  private static DefaultBotOptions createOptions(InetAddress address) {
+    return createOptions(RequestConfig.custom().setLocalAddress(address));
+  }
+
+  private static DefaultBotOptions createOptions(RequestConfig.Builder config) {
+    final DefaultBotOptions options = new DefaultBotOptions();
+    options.setRequestConfig(config.build());
+    return options;
   }
 }

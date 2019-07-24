@@ -29,12 +29,13 @@ public abstract class Factory {
     return Stream.of(elements).map(mapper).collect(toList());
   }
 
-  public static <K,V> Map<K,V> mapOf(K k1, V v1, K k2, V v2, K k3, V v3, K k4, V v4) {
+  public static <K,V> Map<K,V> mapOf(K k1, V v1, K k2, V v2, K k3, V v3, K k4, V v4, K k5, V v5) {
     final Map<K,V> result = new HashMap<>();
     result.put(k1, v1);
     result.put(k2, v2);
     result.put(k3, v3);
     result.put(k4, v4);
+    result.put(k5, v5);
     return result;
   }
 

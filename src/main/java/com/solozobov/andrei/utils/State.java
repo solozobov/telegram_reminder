@@ -1,7 +1,7 @@
-package com.solozobov.andrei;
+package com.solozobov.andrei.utils;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.solozobov.andrei.utils.Assert;
+import com.solozobov.andrei.RemindException;
 import org.json.JSONObject;
 
 import java.time.LocalDate;
