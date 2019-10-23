@@ -29,7 +29,7 @@ public abstract class ButtonAction<Data> {
   }
 
   public void perform(TelegramBot bot, Message message, String actionKey) {
-    LOG.info(message.getFrom().getUserName() + " pressed Button '" + actionKey + "'");
+    LOG.info(message.getChat().getUserName() + " pressed Button '" + actionKey + "'");
     perform2(bot, message, serializer.deserialize(actionKey.substring(key.length() + 1)));
   }
 

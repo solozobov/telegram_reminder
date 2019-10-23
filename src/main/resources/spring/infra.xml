@@ -12,29 +12,7 @@
     <context:annotation-config/>
     <bean class="org.springframework.context.support.PropertySourcesPlaceholderConfigurer"/>
 
-    <alias name="dataSourceH2" alias="dataSource"/>
-
-    <!--<bean id="dataSourcePG" class="com.zaxxer.hikari.HikariDataSource">-->
-        <!--&lt;!&ndash;https://github.com/brettwooldridge/HikariCP#configuration-knobs-baby&ndash;&gt;-->
-        <!--<property name="dataSourceClassName" value="org.postgresql.ds.PGSimpleDataSource"/>-->
-        <!--<property name="dataSourceProperties">-->
-            <!--<props>-->
-                <!--<prop key="url">${remember.db.url}</prop>-->
-                <!--<prop key="user">${remember.db.user}</prop>-->
-                <!--<prop key="password">${remember.db.password}</prop>-->
-            <!--</props>-->
-        <!--</property>-->
-
-        <!--<property name="transactionIsolation" value="${remember.datasource.isolationLevel:#{T(java.sql.Connection).TRANSACTION_READ_COMMITTED}}"/>-->
-        <!--<property name="autoCommit" value="${remember.datasource.pool.autoCommit:true}"/>-->
-        <!--<property name="readOnly" value="${remember.datasource.pool.readOnly:false}"/>-->
-
-        <!--<property name="maximumPoolSize" value="${remember.datasource.pool.max}"/>-->
-        <!--<property name="connectionTimeout" value="${remember.datasource.pool.maxWait:#{T(java.util.concurrent.TimeUnit).SECONDS.toMillis(30)}}"/>-->
-        <!--<property name="validationTimeout" value="${remember.datasource.pool.validationTimeout:#{T(java.util.concurrent.TimeUnit).SECONDS.toMillis(5)}}"/>-->
-    <!--</bean>-->
-
-    <bean id="dataSourceH2" class="org.springframework.jdbc.datasource.SimpleDriverDataSource">
+    <bean id="dataSource" class="org.springframework.jdbc.datasource.SimpleDriverDataSource">
         <property name="driverClass" value="org.h2.Driver"/>
         <property name="url" value="${remember.db.url}"/>
         <property name="username" value="${remember.db.user}"/>

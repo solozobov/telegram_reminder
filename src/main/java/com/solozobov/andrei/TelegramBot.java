@@ -3,6 +3,7 @@ package com.solozobov.andrei;
 import com.solozobov.andrei.utils.Exceptions;
 import com.solozobov.andrei.utils.State;
 import org.apache.http.client.config.RequestConfig;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +34,8 @@ import static java.util.Comparator.comparingInt;
 /**
  * solozobov on 09/12/2018
  * https://core.telegram.org/bots/api#inlinekeyboardbutton
+ *
+ * checking ip-address https://blocklist.rkn.gov.ru
  */
 @Component
 public class TelegramBot extends BaseBot {
@@ -136,8 +139,7 @@ public class TelegramBot extends BaseBot {
               .enableMarkdown(true)
       );
     } catch (TelegramApiException e) {
-      throw new RemindException(e,
-                                "Failed replying to message in chat #" + message.getChatId() + " with '" + text + "'" + (keyboard == null ? "" : " and keyboard"));
+      throw new RemindException(e, "Failed replying to message in chat #" + message.getChatId() + " with '" + text + "'" + (keyboard == null ? "" : " and keyboard"));
     }
   }
 
@@ -219,27 +221,30 @@ public class TelegramBot extends BaseBot {
 
   private static DefaultBotOptions createOptions(String botName, String botToken) {
     try {
-      final InetAddress inetAddress = list(NetworkInterface.getNetworkInterfaces())
-          .stream()
-          .filter(networkInterface -> {
-            try {
-              return !networkInterface.isLoopback();
-            } catch (SocketException e) {
-              throw new RemindException(e, "Failed to analyze " + networkInterface);
-            }
-          })
-          .sorted(comparingInt(i -> i.getName().contains("utun1") ? 0 : 1))
-          .flatMap(i -> list(i.getInetAddresses()).stream().sorted(comparingInt(a -> a instanceof Inet6Address ? 0 : 1)))
-          .filter(address -> check(botName, botToken, address))
-          .findFirst()
-          .orElseThrow(() -> new RemindException("No way to connect to Telegram"));
-
+      final InetAddress inetAddress = fundLocalAddress(botName, botToken);
       LOG.info("Using " + inetAddress);
-
-      return createOptions(inetAddress);
+      return createOptions(RequestConfig.custom().setLocalAddress(inetAddress));
     } catch (SocketException e) {
       throw new RemindException(e);
     }
+  }
+
+  @NotNull
+  private static InetAddress fundLocalAddress(String botName, String botToken) throws SocketException {
+    return list(NetworkInterface.getNetworkInterfaces())
+        .stream()
+        .filter(networkInterface -> {
+          try {
+            return !networkInterface.isLoopback();
+          } catch (SocketException e) {
+            throw new RemindException(e, "Failed to analyze " + networkInterface);
+          }
+        })
+        .sorted(comparingInt(i -> i.getName().contains("utun1") ? 0 : 1))
+        .flatMap(i -> list(i.getInetAddresses()).stream().sorted(comparingInt(a -> a instanceof Inet6Address ? 0 : 1)))
+        .filter(address -> check(botName, botToken, address))
+        .findFirst()
+        .orElseThrow(() -> new RemindException("No way to connect to Telegram"));
   }
 
   private static boolean check(String botName, String botToken, InetAddress address) {
@@ -266,10 +271,6 @@ public class TelegramBot extends BaseBot {
     public void close() {
       this.onClosing();
     }
-  }
-
-  private static DefaultBotOptions createOptions(InetAddress address) {
-    return createOptions(RequestConfig.custom().setLocalAddress(address));
   }
 
   private static DefaultBotOptions createOptions(RequestConfig.Builder config) {

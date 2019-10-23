@@ -51,16 +51,16 @@
             <artifactId>logback-core</artifactId>
             <version>1.0.13</version>
         </dependency>
-        <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <version>42.2.2</version>
-        </dependency>
-        <dependency>
-            <groupId>com.zaxxer</groupId>
-            <artifactId>HikariCP</artifactId>
-            <version>3.1.0</version>
-        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>org.postgresql</groupId>-->
+            <!--<artifactId>postgresql</artifactId>-->
+            <!--<version>42.2.2</version>-->
+        <!--</dependency>-->
+        <!--<dependency>-->
+            <!--<groupId>com.zaxxer</groupId>-->
+            <!--<artifactId>HikariCP</artifactId>-->
+            <!--<version>3.1.0</version>-->
+        <!--</dependency>-->
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
@@ -121,7 +121,7 @@
                     <execution>
                         <phase>generate-sources</phase>
                         <goals>
-                            <goal>clean</goal>
+                            <!--<goal>clean</goal>-->
                             <goal>migrate</goal>
                         </goals>
                     </execution>

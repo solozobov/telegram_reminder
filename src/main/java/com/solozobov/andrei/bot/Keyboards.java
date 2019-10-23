@@ -172,14 +172,14 @@ public class Keyboards {
         button("+" + Naming.minutesAccusative(minutesSmallStep), minutesSwitchAction.apply(currentMinutes + MINUTES.toMinutes(minutesSmallStep)))
     ));
     result.add(list(
-        currentMinutes < DAYS.toMinutes(daysSmallStep) ? empty() : button("-" + Naming.daysAccusative(daysSmallStep), minutesSwitchAction.apply(currentMinutes + DAYS.toMinutes(daysSmallStep))),
-        currentMinutes < HOURS.toMinutes(hoursSmallStep) ? empty() : button("-" + Naming.hoursAccusative(hoursSmallStep), minutesSwitchAction.apply(currentMinutes + HOURS.toMinutes(hoursSmallStep))),
-        currentMinutes < MINUTES.toMinutes(minutesSmallStep) ? empty() : button("-" + Naming.minutesAccusative(minutesSmallStep), minutesSwitchAction.apply(currentMinutes + MINUTES.toMinutes(minutesSmallStep)))
+        currentMinutes < DAYS.toMinutes(daysSmallStep) ? empty() : button("-" + Naming.daysAccusative(daysSmallStep), minutesSwitchAction.apply(currentMinutes - DAYS.toMinutes(daysSmallStep))),
+        currentMinutes < HOURS.toMinutes(hoursSmallStep) ? empty() : button("-" + Naming.hoursAccusative(hoursSmallStep), minutesSwitchAction.apply(currentMinutes - HOURS.toMinutes(hoursSmallStep))),
+        currentMinutes < MINUTES.toMinutes(minutesSmallStep) ? empty() : button("-" + Naming.minutesAccusative(minutesSmallStep), minutesSwitchAction.apply(currentMinutes - MINUTES.toMinutes(minutesSmallStep)))
     ));
     result.add(list(
-        currentMinutes < DAYS.toMinutes(daysBigStep) ? empty() : button("-" + Naming.daysAccusative(daysBigStep), minutesSwitchAction.apply(currentMinutes + DAYS.toMinutes(daysBigStep))),
-        currentMinutes < HOURS.toMinutes(hoursBigStep) ? empty() : button("-" + Naming.hoursAccusative(hoursBigStep), minutesSwitchAction.apply(currentMinutes + HOURS.toMinutes(hoursBigStep))),
-        currentMinutes < MINUTES.toMinutes(minutesBigStep) ? empty() : button("-" + Naming.minutesAccusative(minutesBigStep), minutesSwitchAction.apply(currentMinutes + MINUTES.toMinutes(minutesBigStep)))
+        currentMinutes < DAYS.toMinutes(daysBigStep) ? empty() : button("-" + Naming.daysAccusative(daysBigStep), minutesSwitchAction.apply(currentMinutes - DAYS.toMinutes(daysBigStep))),
+        currentMinutes < HOURS.toMinutes(hoursBigStep) ? empty() : button("-" + Naming.hoursAccusative(hoursBigStep), minutesSwitchAction.apply(currentMinutes - HOURS.toMinutes(hoursBigStep))),
+        currentMinutes < MINUTES.toMinutes(minutesBigStep) ? empty() : button("-" + Naming.minutesAccusative(minutesBigStep), minutesSwitchAction.apply(currentMinutes - MINUTES.toMinutes(minutesBigStep)))
     ));
 
     return new InlineKeyboardMarkup().setKeyboard(result);

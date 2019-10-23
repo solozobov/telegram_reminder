@@ -71,7 +71,7 @@ public class FirstBrain {
     new MessageAction("/start") {
       protected void perform2(TelegramBot bot, Message message) {
         LOG.info("/start " + message);
-        bot.write(message, bold("Здравствуйте!") + "\nЯ бот Напоминатор, умею напоминать о чём угодно в удобное вам время.\nУмею напомининать разово, напрмиер о походе в театр, или регулярно, например о днях рождения или об окончании месяца.");
+        bot.write(message, bold("Здравствуйте!") + "\nЯ бот Напоминатор, умею напоминать о чём угодно в удобное вам время.\nУмею напомининать разово, например о походе в театр, или регулярно, например о днях рождения или об окончании месяца.");
         final UsersRecord user = getUser(message);
         if (!user.getApproved()) {
           bot.write(message, "Кажется, вы новый пользователь. Поговорите сначала с " + userLink("Андреем", ANDREI_LOGIN) + ".\nОн вам расскажет, насколько я стабильно работаю, чего от меня стоит ожидать, а чего не стоит.");
@@ -204,7 +204,7 @@ public class FirstBrain {
       final LocalDateTime dateTimeUtc = LocalDateTime.now(UTC).plusMinutes(notification.inMinutes);
       notificationRepository.create(message.getChatId(), notification.messageId, dateTimeUtc);
 
-      final ZonedDateTime userSelectedDateTime = dateTimeUtc.atZone(getUserTimeZone());
+      final ZonedDateTime userSelectedDateTime = dateTimeUtc.atZone(UTC).withZoneSameInstant(getUserTimeZone());
       bot.editMessage(
           message,
           String.format(
