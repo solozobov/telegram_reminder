@@ -32,7 +32,6 @@ public class NotificationSystem {
     }
   }
 
-
   @Autowired
   public NotificationSystem(TelegramBot telegramBot, NotificationRepository notificationRepository) {
     this.telegramBot = telegramBot;
