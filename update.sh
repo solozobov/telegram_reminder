@@ -10,7 +10,7 @@ for pid in `cat ~/remember/pid`;
 do
   kill -9 $pid || echo;
 done
-rm ~/remember/pid
-rm ~/remember/db.lock.db
+rm ~/remember/pid || echo
+rm ~/remember/db.lock.db || echo
 nohup /usr/bin/java -jar target/remember-1.0-SNAPSHOT.jar com.solozobov.andrei.Application --spring.config.location=file:/root/remember/application.properties 2>&1 >> ~/remember/log &
 echo $! >> ~/remember/pid
