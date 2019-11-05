@@ -44,7 +44,7 @@ public class SettingSystem {
     }
 
     final String defaultValue = key.valueConverter.convert(key.defaultValue);
-    settingRepository.persistOrUpdate(key.key, defaultValue);
+    settingRepository.set(key.key, defaultValue);
     LOG.info("Setting " + key.key + " set to default '" + defaultValue + "'");
     return key.defaultValue;
   }
@@ -54,7 +54,7 @@ public class SettingSystem {
       settingRepository.delete(key.key);
       key2value.put(key, NULL);
     } else {
-      settingRepository.persistOrUpdate(key.key, key.valueConverter.convert(value));
+      settingRepository.set(key.key, key.valueConverter.convert(value));
       key2value.put(key, value);
     }
   }

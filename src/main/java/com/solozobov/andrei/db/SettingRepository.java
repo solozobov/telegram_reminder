@@ -17,12 +17,14 @@ public class SettingRepository {
 
   private final DSLContext db;
 
-  public void persistOrUpdate(@NotNull String key, @NotNull String value) {
-    db.insertInto(SETTINGS, SETTINGS.KEY, SETTINGS.VALUE)
-      .values(key, value)
-      .onDuplicateKeyUpdate()
-      .set(SETTINGS.VALUE, value)
-      .execute();
+  public void set(@NotNull String key, @NotNull String value) {
+    if (db.update(SETTINGS).set(SETTINGS.VALUE, value).where(SETTINGS.KEY.eq(key)).execute() == 0) {
+      db.insertInto(SETTINGS, SETTINGS.KEY, SETTINGS.VALUE)
+        .values(key, value)
+        .onDuplicateKeyUpdate()
+        .set(SETTINGS.VALUE, value)
+        .execute();
+    }
   }
 
   public @Nullable String get(@NotNull String key) {
