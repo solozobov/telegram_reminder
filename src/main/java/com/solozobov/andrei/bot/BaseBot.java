@@ -1,4 +1,4 @@
-package com.solozobov.andrei;
+package com.solozobov.andrei.bot;
 
 import org.telegram.telegrambots.bots.DefaultBotOptions;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;

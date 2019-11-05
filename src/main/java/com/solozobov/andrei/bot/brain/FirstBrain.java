@@ -1,12 +1,12 @@
-package com.solozobov.andrei.bot;
+package com.solozobov.andrei.bot.brain;
 
-import com.solozobov.andrei.ButtonAction;
-import com.solozobov.andrei.MessageAction;
-import com.solozobov.andrei.TelegramBot;
+import com.solozobov.andrei.bot.ButtonAction;
+import com.solozobov.andrei.bot.MessageAction;
+import com.solozobov.andrei.bot.TelegramBot;
 import com.solozobov.andrei.db.NotificationRepository;
 import com.solozobov.andrei.db.UserRepository;
-import com.solozobov.andrei.bot.Dtos.ExactNotification;
-import com.solozobov.andrei.bot.Dtos.UserId;
+import com.solozobov.andrei.bot.brain.Dtos.ExactNotification;
+import com.solozobov.andrei.bot.brain.Dtos.UserId;
 import com.solozobov.andrei.utils.Serializer;
 import org.jetbrains.annotations.NotNull;
 import org.jooq.db.tables.records.UsersRecord;
@@ -19,7 +19,9 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 
-import static com.solozobov.andrei.bot.Dtos.*;
+import static com.solozobov.andrei.bot.TelegramBot.ADMIN_CHAT_ID;
+import static com.solozobov.andrei.bot.TelegramBot.ADMIN_LOGIN;
+import static com.solozobov.andrei.bot.brain.Dtos.*;
 import static com.solozobov.andrei.bot.Keyboards.*;
 import static com.solozobov.andrei.utils.Factory.list;
 import static com.solozobov.andrei.utils.Naming.dayOfWeek;
@@ -32,8 +34,6 @@ import static com.solozobov.andrei.utils.TelegramFormat.*;
  */
 @Component
 public class FirstBrain {
-  private static final String ANDREI_LOGIN = "mimimotik";
-  private static final int ANDREI_CHAT_ID = 109580470;
   private static final int YANA_CHAT_ID = 498779902;
   private static final Logger LOG = LoggerFactory.getLogger(FirstBrain.class);
   private static final ZoneId UTC = ZoneId.of("UTC");
@@ -52,11 +52,11 @@ public class FirstBrain {
       final UsersRecord user = getUser(message);
       if (user.getApproved()) {
         perform3(bot, message);
-      } else if (ANDREI_LOGIN.equals(message.getChat().getUserName()) || message.getChatId() == YANA_CHAT_ID) {
+      } else if (ADMIN_LOGIN.equals(message.getChat().getUserName()) || message.getChatId() == YANA_CHAT_ID) {
         userRepository.approve(user.getId());
         perform3(bot, message);
       } else {
-        bot.write(message, "Поговорите сначала с " + userLink("Андреем", ANDREI_LOGIN) + ".\nБез его разрешения я не могу вам помогать.");
+        bot.write(message, "Поговорите сначала с " + userLink("Андреем", ADMIN_LOGIN) + ".\nБез его разрешения я не могу вам помогать.");
       }
     }
 
@@ -74,8 +74,8 @@ public class FirstBrain {
         bot.write(message, bold("Здравствуйте!") + "\nЯ бот Напоминатор, умею напоминать о чём угодно в удобное вам время.\nУмею напомининать разово, например о походе в театр, или регулярно, например о днях рождения или об окончании месяца.");
         final UsersRecord user = getUser(message);
         if (!user.getApproved()) {
-          bot.write(message, "Кажется, вы новый пользователь. Поговорите сначала с " + userLink("Андреем", ANDREI_LOGIN) + ".\nОн вам расскажет, насколько я стабильно работаю, чего от меня стоит ожидать, а чего не стоит.");
-          bot.write(ANDREI_CHAT_ID, "Новый пользователь хочет добавиться " + userLink(user.getFirstName() + " " + user.getLastName(), user.getChatId()), keyboard(button("принять", APPROVE_USER.getActionKey(new UserId(user)))));
+          bot.write(message, "Кажется, вы новый пользователь. Поговорите сначала с " + userLink("Андреем", ADMIN_LOGIN) + ".\nОн вам расскажет, насколько я стабильно работаю, чего от меня стоит ожидать, а чего не стоит.");
+          bot.write(ADMIN_CHAT_ID, "Новый пользователь хочет добавиться " + userLink(user.getFirstName() + " " + user.getLastName(), user.getChatId()), keyboard(button("принять", APPROVE_USER.getActionKey(new UserId(user)))));
         }
       }
     };
@@ -112,11 +112,11 @@ public class FirstBrain {
       final UsersRecord user = getUser(message);
       if (user.getApproved()) {
         perform3(bot, message, data);
-      } else if (ANDREI_LOGIN.equals(message.getChat().getUserName()) || message.getChatId() == YANA_CHAT_ID) {
+      } else if (ADMIN_LOGIN.equals(message.getChat().getUserName()) || message.getChatId() == YANA_CHAT_ID) {
         userRepository.approve(user.getId());
         perform3(bot, message, data);
       } else {
-        bot.write(message, "Поговорите сначала с " + userLink("Андреем", ANDREI_LOGIN) + ".\nБез его разрешения я не могу вам помогать.");
+        bot.write(message, "Поговорите сначала с " + userLink("Андреем", ADMIN_LOGIN) + ".\nБез его разрешения я не могу вам помогать.");
       }
     }
 
@@ -129,7 +129,7 @@ public class FirstBrain {
 
   private final ButtonAction<UserId> APPROVE_USER = new ButtonAction<UserId>("1", USER_ID) {
     public void perform2(TelegramBot bot, Message message, UserId userId) {
-      if (ANDREI_LOGIN.equals(message.getChat().getUserName())) {
+      if (ADMIN_LOGIN.equals(message.getChat().getUserName())) {
         userRepository.approve(userId.id);
         bot.editMessage(message, message.getText());
       } else {

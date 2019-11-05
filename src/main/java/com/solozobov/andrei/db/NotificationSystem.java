@@ -1,7 +1,6 @@
 package com.solozobov.andrei.db;
 
-import com.solozobov.andrei.TelegramBot;
-import com.solozobov.andrei.db.NotificationRepository;
+import com.solozobov.andrei.bot.TelegramBot;
 import com.solozobov.andrei.db.dto.NotificationDto;
 import com.solozobov.andrei.utils.Threads;
 import org.springframework.beans.factory.annotation.Autowired;

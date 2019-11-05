@@ -1,6 +1,6 @@
 package com.solozobov.andrei.utils;
 
-import com.solozobov.andrei.TelegramBot;
+import com.solozobov.andrei.bot.TelegramBot;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -1,5 +1,6 @@
-package com.solozobov.andrei;
+package com.solozobov.andrei.bot;
 
+import com.solozobov.andrei.RememberException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -23,7 +24,7 @@ public abstract class MessageAction {
 
   public MessageAction(String message) {
     if (actions.put(message, this) != null) {
-      throw new RemindException("Duplicated MessageAction for message '" + message + "'");
+      throw new RememberException("Duplicated MessageAction for message '" + message + "'");
     }
   }
 }

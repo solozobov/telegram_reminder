@@ -122,6 +122,7 @@
                         <phase>generate-sources</phase>
                         <goals>
                             <!--<goal>clean</goal>-->
+                            <goal>init</goal>
                             <goal>migrate</goal>
                         </goals>
                     </execution>
@@ -134,6 +135,7 @@
                     <locations>
                         <location>filesystem:src/main/resources/db/migration</location>
                     </locations>
+                    <table>SCHEMA_HISTORY</table>
                 </configuration>
             </plugin>
             <plugin>

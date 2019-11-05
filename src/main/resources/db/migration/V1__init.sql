@@ -17,3 +17,14 @@ CREATE TABLE IF NOT EXISTS notifications(
   timestamp_utc     TIMESTAMP NOT NULL,
   forestall_minutes INT       NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS settings(
+  id      BIGSERIAL NOT NULL PRIMARY KEY,
+  key     VARCHAR   NOT NULL,
+  value   VARCHAR   NOT NULL,
+
+  CONSTRAINT settings_ui_key UNIQUE(key),
+
+  CONSTRAINT settings_chk_key CHECK(length(key) <= 1024),
+  CONSTRAINT settings_chk_value CHECK(length(value) <= 4096)
+);

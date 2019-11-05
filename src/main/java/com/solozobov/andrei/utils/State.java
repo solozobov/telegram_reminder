@@ -1,7 +1,7 @@
 package com.solozobov.andrei.utils;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.solozobov.andrei.RemindException;
+import com.solozobov.andrei.RememberException;
 import org.json.JSONObject;
 
 import java.time.LocalDate;
@@ -33,7 +33,7 @@ public class State {
           return notificationType;
         }
       }
-      throw new RemindException("No NotificationType with key '" + key + "'");
+      throw new RememberException("No NotificationType with key '" + key + "'");
     }
   }
 

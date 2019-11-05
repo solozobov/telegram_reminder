@@ -1,6 +1,6 @@
 package com.solozobov.andrei.utils;
 
-import com.solozobov.andrei.RemindException;
+import com.solozobov.andrei.RememberException;
 import org.junit.Test;
 
 import java.time.LocalDate;
@@ -43,7 +43,7 @@ public class StateTest {
     assertEquals("{\"test\":\"json\"}", decode(encode("{\"test\":\"json\"}")));
   }
 
-  @Test(expected = RemindException.class)
+  @Test(expected = RememberException.class)
   public void test_encodeDecodeInvalidSymbol() {
     assertEquals("{\"ключ\":\"значение\"}", decode(encode("{\"ключ\":\"значение\"}")));
   }

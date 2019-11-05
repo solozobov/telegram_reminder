@@ -1,4 +1,4 @@
-package com.solozobov.andrei.bot;
+package com.solozobov.andrei.bot.brain;
 
 import com.solozobov.andrei.utils.Serializer;
 import org.jooq.db.tables.records.UsersRecord;

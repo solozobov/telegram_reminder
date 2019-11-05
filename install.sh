@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -e
+set -ex
 
 mkdir ~/remember
 echo>~/remember/application.properties
@@ -13,3 +13,16 @@ nohup /usr/bin/java -jar target/remember-1.0-SNAPSHOT.jar com.solozobov.andrei.A
 echo $! >> ~/remember/pid
 cp update.sh ~/remember/update.sh
 chmod 700 ~/remember/update.sh
+
+echo "
+sql () {
+  rm -rf ~/h2_shell
+  mkdir ~/h2_shell
+  cp ~/remember/db.mv.db ~/h2_shell/db.mv.db
+  cp ~/.m2/repository/com/h2database/h2/*/h2*.jar ~/h2_shell/h2.jar
+  pushd ~/h2_shell
+  java -cp h2*.jar org.h2.tools.Shell -url jdbc:h2:/root/h2_shell/db -driver org.h2.Driver -user $1 -password $2
+  popd
+  rm -rf ~/h2_shell
+}" >> ~/.profile
+

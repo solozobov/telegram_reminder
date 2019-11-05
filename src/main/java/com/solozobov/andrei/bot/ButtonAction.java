@@ -1,5 +1,6 @@
-package com.solozobov.andrei;
+package com.solozobov.andrei.bot;
 
+import com.solozobov.andrei.RememberException;
 import com.solozobov.andrei.utils.Serializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,7 +40,7 @@ public abstract class ButtonAction<Data> {
     this.key = key;
     this.serializer = serializer;
     if (!actions.add(this)) {
-      throw new RemindException("Duplicated ButtonAction for key '" + key + "'");
+      throw new RememberException("Duplicated ButtonAction for key '" + key + "'");
     }
   }
 

@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
-import static com.solozobov.andrei.TelegramBot.NO_ACTION_BUTTON;
+import static com.solozobov.andrei.bot.TelegramBot.NO_ACTION_BUTTON;
 import static com.solozobov.andrei.utils.Factory.list;
 import static java.util.concurrent.TimeUnit.*;
 import static java.util.concurrent.TimeUnit.MINUTES;

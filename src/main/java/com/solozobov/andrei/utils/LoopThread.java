@@ -1,6 +1,6 @@
 package com.solozobov.andrei.utils;
 
-import com.solozobov.andrei.RemindException;
+import com.solozobov.andrei.RememberException;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,7 +54,7 @@ public class LoopThread {
 
   public LoopThread start() {
     if (loopThread.isAlive()) {
-      throw new RemindException("Loop thread '%s' was already started", loopThread.getName());
+      throw new RememberException("Loop thread '%s' was already started", loopThread.getName());
     }
     loopThread.start();
     return this;

@@ -18,6 +18,14 @@ public class Pair<F,S> {
     this.second = second;
   }
 
+  public F first() {
+    return first;
+  }
+
+  public S second() {
+    return second;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) { return true; }

@@ -1,6 +1,6 @@
 package com.solozobov.andrei.utils;
 
-import com.solozobov.andrei.RemindException;
+import com.solozobov.andrei.RememberException;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -25,7 +25,7 @@ public class Naming {
       case 10: return "Октябрь";
       case 11: return "Ноябрь";
       case 12: return "Декабрь";
-      default: throw new RemindException("Unsupported month value " + date.getMonthValue() + " " + date);
+      default: throw new RememberException("Unsupported month value " + date.getMonthValue() + " " + date);
     }
   }
 
@@ -47,7 +47,7 @@ public class Naming {
       case 10: return "Октября";
       case 11: return "Ноября";
       case 12: return "Декабря";
-      default: throw new RemindException("Unsupported " + month);
+      default: throw new RememberException("Unsupported " + month);
     }
   }
 
@@ -64,7 +64,7 @@ public class Naming {
       case 5: return "пятницу";
       case 6: return "субботу";
       case 7: return "воскресенье";
-      default: throw new RemindException("Unexpected " + dayOfWeek);
+      default: throw new RememberException("Unexpected " + dayOfWeek);
     }
   }
 
@@ -77,7 +77,7 @@ public class Naming {
       case 5: return "пятницы";
       case 6: return "субботы";
       case 7: return "воскресенья";
-      default: throw new RemindException("Unexpected " + date.getDayOfWeek());
+      default: throw new RememberException("Unexpected " + date.getDayOfWeek());
     }
   }
 
