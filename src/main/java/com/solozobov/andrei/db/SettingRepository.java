@@ -18,7 +18,11 @@ public class SettingRepository {
   private final DSLContext db;
 
   public void persistOrUpdate(@NotNull String key, @NotNull String value) {
-    db.insertInto(SETTINGS, SETTINGS.KEY, SETTINGS.VALUE).values(key, value).onDuplicateKeyUpdate();
+    db.insertInto(SETTINGS, SETTINGS.KEY, SETTINGS.VALUE)
+      .values(key, value)
+      .onDuplicateKeyUpdate()
+      .set(SETTINGS.VALUE, value)
+      .execute();
   }
 
   public @Nullable String get(@NotNull String key) {
