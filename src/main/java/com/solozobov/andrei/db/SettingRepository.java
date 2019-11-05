@@ -19,9 +19,7 @@ public class SettingRepository {
 
   public void set(@NotNull String key, @NotNull String value) {
     if (db.update(SETTINGS).set(SETTINGS.VALUE, value).where(SETTINGS.KEY.eq(key)).execute() == 0) {
-      db.insertInto(SETTINGS, SETTINGS.KEY, SETTINGS.VALUE)
-        .values(key, value)
-        .execute();
+      db.insertInto(SETTINGS, SETTINGS.KEY, SETTINGS.VALUE).values(key, value).execute();
     }
   }
 

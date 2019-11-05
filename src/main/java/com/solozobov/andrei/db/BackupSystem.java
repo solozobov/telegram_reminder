@@ -47,7 +47,7 @@ public class BackupSystem {
   private final DataSource dataSource;
   private final TelegramBot bot;
   private final SettingSystem settingSystem;
-  private final String workingFolder;
+  private final File backupFolder;
   private final LinkedList<File> backupsReplicationQueue;
 
   @Autowired
@@ -60,9 +60,8 @@ public class BackupSystem {
   ) {
     this.dataSource = dataSource;
     this.bot = bot;
-    this.workingFolder = workingFolder;
+    this.backupFolder = new File(workingFolder, "db_backups");
     this.settingSystem = settingSystem;
-    final File backupFolder = new File(workingFolder, "db_backup");
     if (backupFolder.exists() && !backupFolder.isDirectory()) {
       //noinspection ResultOfMethodCallIgnored
       backupFolder.delete();
@@ -85,7 +84,7 @@ public class BackupSystem {
 
   private void makeBackup() {
     final ZonedDateTime now = ZonedDateTime.now(ZoneId.ofOffset("UTC", ZoneOffset.ofHours(3)));
-    final String backupFile = workingFolder + "/" + BACKUP_FILE_NAME_PREFIX + now.format(BACKUP_FILE_NAME_FORMAT) + BACKUP_FILE_NAME_SUFFIX;
+    final String backupFile = backupFolder.getAbsolutePath() + "/" + BACKUP_FILE_NAME_PREFIX + now.format(BACKUP_FILE_NAME_FORMAT) + BACKUP_FILE_NAME_SUFFIX;
     executeSqlInTransaction(() -> "database dump", dataSource, "BACKUP TO '" + backupFile + "'");
     backupsReplicationQueue.add(new File(backupFile));
 
