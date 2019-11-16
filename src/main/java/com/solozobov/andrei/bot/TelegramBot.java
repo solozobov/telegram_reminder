@@ -3,6 +3,7 @@ package com.solozobov.andrei.bot;
 import com.solozobov.andrei.RememberException;
 import com.solozobov.andrei.db.SettingSystem;
 import com.solozobov.andrei.utils.Exceptions;
+import com.solozobov.andrei.utils.Factory;
 import com.solozobov.andrei.utils.State;
 import org.apache.http.client.config.RequestConfig;
 import org.jetbrains.annotations.NotNull;
@@ -19,10 +20,11 @@ import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
-import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
 
@@ -35,6 +37,7 @@ import java.util.function.Function;
 import static com.solozobov.andrei.SettingKeys.BACKUP_CHAT_ID;
 import static java.util.Collections.list;
 import static java.util.Comparator.comparingInt;
+import static java.util.stream.Collectors.toList;
 
 /**
  * solozobov on 09/12/2018
@@ -46,7 +49,6 @@ import static java.util.Comparator.comparingInt;
 @SuppressWarnings("WeakerAccess")
 public class TelegramBot extends BaseBot {
   public static final String ADMIN_LOGIN = "mimimotik";
-  public static final int ADMIN_CHAT_ID = 109580470;
 
   public static final String NO_ACTION_BUTTON = "_";
 
@@ -83,18 +85,18 @@ public class TelegramBot extends BaseBot {
   private void onInnerUpdateReceived(Update update) {
     if (update.hasMessage()) {
       final Message message = update.getMessage();
-      final Chat chat = message.getChat();
-//      if (chat.isUserChat()) {
-        for (Map.Entry<String, MessageAction> entry : MessageAction.actions.entrySet()) {
-          if (entry.getKey() != null && entry.getKey().equals(message.getText())) {
-            entry.getValue().perform(this, message);
-            return;
-          }
+      for (Map.Entry<String, MessageAction> entry : MessageAction.actions.entrySet()) {
+        if (entry.getKey() != null && entry.getKey().equals(message.getText())) {
+          entry.getValue().perform(this, message);
+          return;
         }
-        MessageAction.actions.get(null).perform(this, message);
-//      } else {
-//        LOG.error("Not user chat " + update);
-//      }
+      }
+      final MessageAction defaultAction = MessageAction.actions.get(null);
+      if (defaultAction == null) {
+        LOG.error("Default action not defined " + message);
+      } else {
+        defaultAction.perform(this, message);
+      }
     }
     else if (update.hasCallbackQuery()) {
       final CallbackQuery callback = update.getCallbackQuery();
@@ -128,6 +130,19 @@ public class TelegramBot extends BaseBot {
       this.execute(new SendMessage(chatId, text).setReplyMarkup(keyboard).enableMarkdown(true));
     } catch (TelegramApiException e) {
       throw new RememberException(e, "Failed sending message '" + text + "' to chat #" + chatId);
+    }
+  }
+
+  public void write2(Message message, String text) {
+    try {
+      final KeyboardRow row1 = new KeyboardRow();
+      row1.add("A");
+      row1.add("B");
+      final KeyboardRow row2 = new KeyboardRow();
+      row2.add("C");
+      this.execute(new SendMessage(message.getChatId(), text).setReplyMarkup(new ReplyKeyboardMarkup().setKeyboard(Factory.list(row1, row2))).enableMarkdown(true));
+    } catch (TelegramApiException e) {
+      throw new RememberException(e, "Failed sending message '" + text + "' to chat #" + message.getChatId());
     }
   }
 
@@ -254,7 +269,7 @@ public class TelegramBot extends BaseBot {
   private static DefaultBotOptions createOptions(String botName, String botToken) {
     try {
       final InetAddress inetAddress = fundLocalAddress(botName, botToken);
-      LOG.info("Using " + inetAddress);
+      LOG.info("Using local address " + inetAddress + " to connect to Telegram");
       return createOptions(RequestConfig.custom().setLocalAddress(inetAddress));
     } catch (SocketException e) {
       throw new RememberException(e);
@@ -262,37 +277,44 @@ public class TelegramBot extends BaseBot {
   }
 
   private static @NotNull InetAddress fundLocalAddress(String botName, String botToken) throws SocketException {
-    return list(NetworkInterface.getNetworkInterfaces())
+    final List<InetAddress> addresses = list(NetworkInterface.getNetworkInterfaces())
         .stream()
         .filter(networkInterface -> {
           try {
             return !networkInterface.isLoopback();
           } catch (SocketException e) {
-            throw new RememberException(e, "Failed to analyze " + networkInterface);
+            LOG.info("Failed to analyze " + networkInterface);
+            return false;
           }
         })
         .sorted(comparingInt(i -> i.getName().contains("utun1") ? 0 : 1))
         .flatMap(i -> list(i.getInetAddresses()).stream().sorted(comparingInt(a -> a instanceof Inet6Address ? 0 : 1)))
-        .filter(address -> check(botName, botToken, address))
-        .findFirst()
-        .orElseThrow(() -> new RememberException("No way to connect to Telegram"));
+        .collect(toList());
+
+    int timeoutMillis = 100;
+    while (true) {
+      for (InetAddress address : addresses) {
+        if (check(botName, botToken, address, timeoutMillis)) {
+          return address;
+        }
+      }
+      timeoutMillis *= 2;
+      System.out.println("Raising socket timeout to " + timeoutMillis + " millis");
+    }
   }
 
-  private static boolean check(String botName, String botToken, InetAddress address) {
-    LOG.info("Checking address " + address);
-    final long start = System.currentTimeMillis();
-    try (ConnectionTestBot bot = new ConnectionTestBot(botName, botToken, address)) {
+  private static boolean check(String botName, String botToken, InetAddress address, int timeoutMillis) {
+    try (ConnectionTestBot bot = new ConnectionTestBot(botName, botToken, address, timeoutMillis)) {
       bot.clearWebhook();
     } catch (Exception e) {
-      LOG.info("Lost " + (System.currentTimeMillis() - start) + " millis");
       return false;
     }
     return true;
   }
 
   private static class ConnectionTestBot extends BaseBot implements AutoCloseable {
-    ConnectionTestBot(String botName, String botToken, InetAddress address) {
-      super(botName, botToken, createOptions(RequestConfig.custom().setLocalAddress(address).setConnectTimeout(500)));
+    ConnectionTestBot(String botName, String botToken, InetAddress address, int timeoutMillis) {
+      super(botName, botToken, createOptions(RequestConfig.custom().setLocalAddress(address).setConnectTimeout(timeoutMillis)));
     }
 
     @Override

@@ -27,7 +27,11 @@ public class UserRepository {
 
   private final Map<String,UsersRecord> login2user = new HashMap<>();
 
-  public @NotNull UsersRecord createOrUpdateUser(Chat chat) {
+  public @NotNull UsersRecord getByLogin(@NotNull String login) {
+    return db.selectFrom(USERS).where(USERS.LOGIN.eq(login)).fetchOne();
+  }
+
+  public @NotNull UsersRecord createOrUpdateUser(@NotNull Chat chat) {
     final String login = chat.getUserName();
     UsersRecord existing = login2user.get(login);
     if (existing == null) {
@@ -62,7 +66,7 @@ public class UserRepository {
     login2user.put(user.getLogin(), user);
   }
 
-  private @NotNull UsersRecord getOrCreate(Chat chat) {
+  private @NotNull UsersRecord getOrCreate(@NotNull Chat chat) {
     final UsersRecord existing = get(chat);
     if (existing != null) {
       return existing;
@@ -79,7 +83,7 @@ public class UserRepository {
     return db.selectFrom(USERS).where(USERS.ID.eq(userId)).fetchOne();
   }
 
-  private UsersRecord get(Chat chat) {
+  private UsersRecord get(@NotNull Chat chat) {
     return db.selectFrom(USERS).where(USERS.CHAT_ID.eq(chat.getId())).fetchOne();
   }
 

@@ -123,4 +123,76 @@ public class Dtos {
       return new InTimeNotification(parseInt(parts[0]), parseLong(parts[1]));
     }
   };
+
+  public enum NotificationType {
+    DATE    ("d"),
+    INTERVAL("i");
+
+    public static NotificationType get(String key) {
+      for (NotificationType type : NotificationType.values()) {
+        if (type.key.equals(key)) {
+          return type;
+        }
+      }
+      throw new RuntimeException("Can't find NotificationType for key '" + key + "'");
+    }
+
+    public final String key;
+
+    NotificationType(String key) {
+      this.key = key;
+    }
+  }
+
+  public static class Notification {
+    public final int messageId;
+    public final NotificationType type;
+    public final LocalDate date;
+    public final LocalTime time;
+    public final boolean repeated;
+    public final long repeatIntervalMinutes;
+
+    public Notification(
+        int messageId,
+        NotificationType type,
+        LocalDate date,
+        LocalTime time,
+        boolean repeated,
+        long repeatIntervalMinutes
+    ) {
+      this.messageId = messageId;
+      this.type = type;
+      this.date = date;
+      this.time = time;
+      this.repeated = repeated;
+      this.repeatIntervalMinutes = repeatIntervalMinutes;
+    }
+  }
+
+  public static final Serializer<Notification> NOTIFICATION = new Serializer<Notification>() {
+
+    @Override
+    public String serialize(Notification notification) {
+      return notification.messageId + DELIMITER
+           + notification.type.key + DELIMITER
+           + DATE_FORMATTER.format(notification.date) + DELIMITER
+           + TIME_FORMATTER.format(notification.time) + DELIMITER
+           + (notification.repeated ? "r" : "_") + DELIMITER
+           + notification.repeatIntervalMinutes;
+    }
+
+    @Override
+    public Notification deserialize(String string) {
+      final String[] parts = string.split(DELIMITER);
+      return new Notification(
+          parseInt(parts[0]),
+          NotificationType.get(parts[1]),
+          LocalDate.parse(parts[2], DATE_FORMATTER),
+          LocalTime.parse(parts[3], TIME_FORMATTER),
+          "r".equals(parts[4]),
+          parseLong(parts[5])
+      );
+    }
+  };
+
 }

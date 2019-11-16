@@ -41,11 +41,15 @@ public class Keyboards {
 
   @SafeVarargs
   public static InlineKeyboardMarkup keyboard(List<InlineKeyboardButton> ... buttons) {
-    return new InlineKeyboardMarkup().setKeyboard(list(buttons));
+    return keyboard(list(buttons));
   }
 
   public static InlineKeyboardMarkup keyboard(InlineKeyboardButton ... buttons) {
-    return new InlineKeyboardMarkup().setKeyboard(list(list(buttons)));
+    return keyboard(list(list(buttons)));
+  }
+
+  public static InlineKeyboardMarkup keyboard(List<List<InlineKeyboardButton>> buttons) {
+    return new InlineKeyboardMarkup().setKeyboard(buttons);
   }
 
   public static InlineKeyboardMarkup dateSelector(
@@ -149,18 +153,10 @@ public class Keyboards {
     long hoursSmallStep = 1;
     long minutesSmallStep = 1;
 
-    long minutes = currentMinutes % 60;
-    long hours = (currentMinutes / 60) % 24;
-    long days = currentMinutes / 60 / 24;
+    final String text = Naming.timeAccusative(currentMinutes);
 
     final List<List<InlineKeyboardButton>> result = new ArrayList<>();
-    result.add(list(button(
-        "через"
-        + (days == 0 ? "" : " " + Naming.daysAccusative(days))
-        + (hours == 0 ? "" : " " + Naming.hoursAccusative(hours))
-        + (minutes == 0 ? "" : " " + Naming.minutesAccusative(minutes)),
-        minutesSelectAction.apply(currentMinutes)
-    )));
+    result.add(list(button("через " + text, minutesSelectAction.apply(currentMinutes))));
     result.add(list(
         button("+" + Naming.daysAccusative(daysBigStep), minutesSwitchAction.apply(currentMinutes + DAYS.toMinutes(daysBigStep))),
         button("+" + Naming.hoursAccusative(hoursBigStep), minutesSwitchAction.apply(currentMinutes + HOURS.toMinutes(hoursBigStep))),

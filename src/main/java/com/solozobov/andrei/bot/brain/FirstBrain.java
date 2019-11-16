@@ -1,17 +1,10 @@
 package com.solozobov.andrei.bot.brain;
 
 import com.solozobov.andrei.bot.ButtonAction;
-import com.solozobov.andrei.bot.MessageAction;
 import com.solozobov.andrei.bot.TelegramBot;
 import com.solozobov.andrei.db.NotificationRepository;
 import com.solozobov.andrei.db.UserRepository;
 import com.solozobov.andrei.bot.brain.Dtos.ExactNotification;
-import com.solozobov.andrei.bot.brain.Dtos.UserId;
-import com.solozobov.andrei.utils.Serializer;
-import org.jetbrains.annotations.NotNull;
-import org.jooq.db.tables.records.UsersRecord;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -19,84 +12,25 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 
-import static com.solozobov.andrei.bot.TelegramBot.ADMIN_CHAT_ID;
-import static com.solozobov.andrei.bot.TelegramBot.ADMIN_LOGIN;
 import static com.solozobov.andrei.bot.brain.Dtos.*;
 import static com.solozobov.andrei.bot.Keyboards.*;
 import static com.solozobov.andrei.utils.Factory.list;
 import static com.solozobov.andrei.utils.Naming.dayOfWeek;
 import static com.solozobov.andrei.utils.Naming.monthGenitive;
-import static com.solozobov.andrei.utils.TelegramFormat.*;
 
 
 /**
  * solozobov on 02.07.2019
  */
-@Component
-public class FirstBrain {
-  private static final int YANA_CHAT_ID = 498779902;
-  private static final Logger LOG = LoggerFactory.getLogger(FirstBrain.class);
-  private static final ZoneId UTC = ZoneId.of("UTC");
-
-  private final UserRepository userRepository;
-  private final NotificationRepository notificationRepository;
+//@Component
+public class FirstBrain extends BaseBrain {
 
   @Autowired
   public FirstBrain(UserRepository userRepository, NotificationRepository notificationRepository) {
-    this.userRepository = userRepository;
-    this.notificationRepository = notificationRepository;
-  }
-
-  private abstract class AuthorizedMessageAction extends MessageAction {
-    protected void perform2(TelegramBot bot, Message message) {
-      final UsersRecord user = getUser(message);
-      if (user.getApproved()) {
-        perform3(bot, message);
-      } else if (ADMIN_LOGIN.equals(message.getChat().getUserName()) || message.getChatId() == YANA_CHAT_ID) {
-        userRepository.approve(user.getId());
-        perform3(bot, message);
-      } else {
-        bot.write(message, "Поговорите сначала с " + userLink("Андреем", ADMIN_LOGIN) + ".\nБез его разрешения я не могу вам помогать.");
-      }
-    }
-
-    abstract void perform3(TelegramBot bot, Message message);
-
-    AuthorizedMessageAction(String key) {
-      super(key);
-    }
+    super(userRepository, notificationRepository);
   }
 
   {
-    new MessageAction("/start") {
-      protected void perform2(TelegramBot bot, Message message) {
-        LOG.info("/start " + message);
-        bot.write(message, bold("Здравствуйте!") + "\nЯ бот Напоминатор, умею напоминать о чём угодно в удобное вам время.\nУмею напомининать разово, например о походе в театр, или регулярно, например о днях рождения или об окончании месяца.");
-        final UsersRecord user = getUser(message);
-        if (!user.getApproved()) {
-          bot.write(message, "Кажется, вы новый пользователь. Поговорите сначала с " + userLink("Андреем", ADMIN_LOGIN) + ".\nОн вам расскажет, насколько я стабильно работаю, чего от меня стоит ожидать, а чего не стоит.");
-          bot.write(ADMIN_CHAT_ID, "Новый пользователь хочет добавиться " + userLink(user.getFirstName() + " " + user.getLastName(), user.getChatId()), keyboard(button("принять", APPROVE_USER.getActionKey(new UserId(user)))));
-        }
-      }
-    };
-
-    new AuthorizedMessageAction("/create") {
-      protected void perform3(TelegramBot bot, Message message) {
-        bot.write(message, "О чём вам напомнить?");
-      }
-    };
-
-    new AuthorizedMessageAction("/list") {
-      protected void perform3(TelegramBot bot, Message message) {
-      }
-    };
-
-    new AuthorizedMessageAction("/settings") {
-      protected void perform3(TelegramBot bot, Message message) {
-        bot.write(message, "Время отправки регулярных оповещений: 9:00 MSK");
-      }
-    };
-
     new AuthorizedMessageAction(null) {
       protected void perform3(TelegramBot bot, Message message) {
         bot.reply(message, "Каким будет это напоминание?", keyboard(
@@ -106,37 +40,6 @@ public class FirstBrain {
       }
     };
   }
-
-  private abstract class AuthorizedButtonAction<DATA> extends ButtonAction<DATA> {
-    protected void perform2(TelegramBot bot, Message message, DATA data) {
-      final UsersRecord user = getUser(message);
-      if (user.getApproved()) {
-        perform3(bot, message, data);
-      } else if (ADMIN_LOGIN.equals(message.getChat().getUserName()) || message.getChatId() == YANA_CHAT_ID) {
-        userRepository.approve(user.getId());
-        perform3(bot, message, data);
-      } else {
-        bot.write(message, "Поговорите сначала с " + userLink("Андреем", ADMIN_LOGIN) + ".\nБез его разрешения я не могу вам помогать.");
-      }
-    }
-
-    abstract void perform3(TelegramBot bot, Message message, DATA data);
-
-    AuthorizedButtonAction(String key, Serializer<DATA> serializer) {
-      super(key, serializer);
-    }
-  }
-
-  private final ButtonAction<UserId> APPROVE_USER = new ButtonAction<UserId>("1", USER_ID) {
-    public void perform2(TelegramBot bot, Message message, UserId userId) {
-      if (ADMIN_LOGIN.equals(message.getChat().getUserName())) {
-        userRepository.approve(userId.id);
-        bot.editMessage(message, message.getText());
-      } else {
-        bot.write(message, "Вы не Андрей");
-      }
-    }
-  };
 
   private final ButtonAction<MessageId> REMIND_ONCE = new AuthorizedButtonAction<MessageId>("2", MESSAGE_ID) {
     protected void perform3(TelegramBot bot, Message message, MessageId messageId) {
@@ -223,18 +126,4 @@ public class FirstBrain {
       bot.write(message, "Извините, я пока этого не умею :(");
     }
   };
-
-
-  private @NotNull UsersRecord getUser(Message message) {
-    return userRepository.createOrUpdateUser(message.getChat());
-  }
-
-  private ZoneId getUserTimeZone() {
-    return ZoneId.of("Europe/Moscow");
-  }
-
-  private LocalTime getUserDefaultNotificationTime() {
-    return LocalTime.of(9, 0);
-  }
-
 }

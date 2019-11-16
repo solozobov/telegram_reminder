@@ -1,6 +1,7 @@
 package com.solozobov.andrei.utils;
 
 import com.solozobov.andrei.RememberException;
+import org.jetbrains.annotations.NotNull;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -13,18 +14,18 @@ public class Naming {
 
   public static String month(LocalDate date) {
     switch (date.getMonthValue()) {
-      case 1: return "Январь";
-      case 2: return "Февраль";
-      case 3: return "Март";
-      case 4: return "Апрель";
-      case 5: return "Май";
-      case 6: return "Июнь";
-      case 7: return "Июль";
-      case 8: return "Август";
-      case 9: return "Сентябрь";
-      case 10: return "Октябрь";
-      case 11: return "Ноябрь";
-      case 12: return "Декабрь";
+      case 1: return "январь";
+      case 2: return "февраль";
+      case 3: return "март";
+      case 4: return "апрель";
+      case 5: return "май";
+      case 6: return "июнь";
+      case 7: return "июль";
+      case 8: return "август";
+      case 9: return "сентябрь";
+      case 10: return "октябрь";
+      case 11: return "ноябрь";
+      case 12: return "декабрь";
       default: throw new RememberException("Unsupported month value " + date.getMonthValue() + " " + date);
     }
   }
@@ -35,18 +36,18 @@ public class Naming {
 
   public static String monthGenitive(Month month) {
     switch (month.getValue()) {
-      case 1: return "Января";
-      case 2: return "Февраля";
-      case 3: return "Марта";
-      case 4: return "Апреля";
-      case 5: return "Мая";
-      case 6: return "Июня";
-      case 7: return "Июля";
-      case 8: return "Августа";
-      case 9: return "Сентября";
-      case 10: return "Октября";
-      case 11: return "Ноября";
-      case 12: return "Декабря";
+      case 1: return "января";
+      case 2: return "февраля";
+      case 3: return "марта";
+      case 4: return "апреля";
+      case 5: return "мая";
+      case 6: return "июня";
+      case 7: return "июля";
+      case 8: return "августа";
+      case 9: return "сентября";
+      case 10: return "октября";
+      case 11: return "ноября";
+      case 12: return "декабря";
       default: throw new RememberException("Unsupported " + month);
     }
   }
@@ -104,4 +105,14 @@ public class Naming {
     if (remain == 1) return days + " день";
     return days + " дня";
   }
+
+  public static String timeAccusative(long timeMinutes) {
+    long minutes = timeMinutes % 60;
+    long hours = (timeMinutes / 60) % 24;
+    long days = timeMinutes / 60 / 24;
+    return (days == 0 ? "" : " " + Naming.daysAccusative(days))
+         + (hours == 0 ? "" : " " + Naming.hoursAccusative(hours))
+         + (minutes == 0 ? "" : " " + Naming.minutesAccusative(minutes));
+  }
+
 }
