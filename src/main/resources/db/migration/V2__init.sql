@@ -15,7 +15,8 @@ CREATE TABLE IF NOT EXISTS notifications(
   chat_id           BIGINT    NOT NULL,
   message_id        INT       NOT NULL,
   timestamp_utc     TIMESTAMP NOT NULL,
-  forestall_minutes INT       NOT NULL
+  forestall_minutes INT       NOT NULL,
+  repeat_minutes    INT       NULL
 );
 
 CREATE TABLE IF NOT EXISTS settings(

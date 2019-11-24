@@ -41,6 +41,16 @@ public class NotificationRepository {
       .execute();
   }
 
+  public void update(long chatId, int messageId, LocalDateTime dateTimeUtc, int repeatIntervalMinutes) {
+    db.update(NOTIFICATIONS)
+      .set(NOTIFICATIONS.TIMESTAMP_UTC, dateTimeUtc)
+      .set(NOTIFICATIONS.FORESTALL_MINUTES, 0)
+      .set(NOTIFICATIONS.REPEAT_MINUTES, repeatIntervalMinutes)
+      .where(NOTIFICATIONS.CHAT_ID.eq(chatId))
+      .and(NOTIFICATIONS.MESSAGE_ID.eq(messageId))
+      .execute();
+  }
+
   @Autowired
   public NotificationRepository(DSLContext db) {
     this.db = db;

@@ -141,6 +141,48 @@ public class Keyboards {
     return new InlineKeyboardMarkup().setKeyboard(result);
   }
 
+//  public static InlineKeyboardMarkup timeSelector2(
+//      LocalDate date,
+//      ZoneId userTimeZone,
+//      Function<LocalTime, String> timeSelectAction
+//  ) {
+//    ZonedDateTime time;
+//    if (LocalDate.now(userTimeZone).equals(date)) {
+//      time = ZonedDateTime.now(userTimeZone).plusHours(1).withMinute(0).withSecond(0).withNano(0);
+//    } else {
+//      time = ZonedDateTime.of(date, LocalTime.of(0, 0), userTimeZone);
+//    }
+//
+//    final List<List<InlineKeyboardButton>> result = new ArrayList<>();
+//    if (ZonedDateTime.of(date, defaultNotificationTime, userTimeZone).compareTo(time) > 0) {
+//      result.add(list(button(
+//          defaultNotificationTime.format(TIME_FORMATTER),
+//          timeSelectAction.apply(defaultNotificationTime)
+//      )));
+//    }
+//
+//    final ZonedDateTime nextDate = time.plusDays(1).withHour(0);
+//    List<InlineKeyboardButton> line = new ArrayList<>();
+//    int i = 1;
+//    while(time.compareTo(nextDate) < 0) {
+//      line.add(button(time.getHour() + ":00", timeSelectAction.apply(time.toLocalTime())));
+//      if (i % 6 == 0) {
+//        result.add(line);
+//        line = new ArrayList<>();
+//      }
+//      time = time.plusHours(1);
+//      i++;
+//    }
+//    if (!line.isEmpty()) {
+//      result.add(line);
+//    } else if (result.isEmpty()) {
+//      line.add(button("23:59", timeSelectAction.apply(LocalTime.of(23, 59))));
+//      result.add(line);
+//    }
+//
+//    return new InlineKeyboardMarkup().setKeyboard(result);
+//  }
+
   public static InlineKeyboardMarkup dayHourMinuteSelector(
       long currentMinutes,
       Function<Long, String> minutesSwitchAction,

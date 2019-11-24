@@ -146,22 +146,19 @@ public class Dtos {
 
   public static class Notification {
     public final int messageId;
-    public final NotificationType type;
     public final LocalDate date;
     public final LocalTime time;
     public final boolean repeated;
-    public final long repeatIntervalMinutes;
+    public final int repeatIntervalMinutes;
 
     public Notification(
         int messageId,
-        NotificationType type,
         LocalDate date,
         LocalTime time,
         boolean repeated,
-        long repeatIntervalMinutes
+        int repeatIntervalMinutes
     ) {
       this.messageId = messageId;
-      this.type = type;
       this.date = date;
       this.time = time;
       this.repeated = repeated;
@@ -174,7 +171,6 @@ public class Dtos {
     @Override
     public String serialize(Notification notification) {
       return notification.messageId + DELIMITER
-           + notification.type.key + DELIMITER
            + DATE_FORMATTER.format(notification.date) + DELIMITER
            + TIME_FORMATTER.format(notification.time) + DELIMITER
            + (notification.repeated ? "r" : "_") + DELIMITER
@@ -186,11 +182,10 @@ public class Dtos {
       final String[] parts = string.split(DELIMITER);
       return new Notification(
           parseInt(parts[0]),
-          NotificationType.get(parts[1]),
-          LocalDate.parse(parts[2], DATE_FORMATTER),
-          LocalTime.parse(parts[3], TIME_FORMATTER),
-          "r".equals(parts[4]),
-          parseLong(parts[5])
+          LocalDate.parse(parts[1], DATE_FORMATTER),
+          LocalTime.parse(parts[2], TIME_FORMATTER),
+          "r".equals(parts[3]),
+          parseInt(parts[4])
       );
     }
   };

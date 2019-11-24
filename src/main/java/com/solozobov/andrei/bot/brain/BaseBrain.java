@@ -110,7 +110,7 @@ public class BaseBrain {
         userRepository.approve(userId.id);
         bot.editMessage(message, message.getText());
       } else {
-        bot.write(message, "Вы не Андрей");
+        bot.write(message, "Вы не администратор");
       }
     }
   };

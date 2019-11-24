@@ -9,8 +9,6 @@ import static org.junit.Assert.*;
  */
 public class SettingRepositoryTest {
 
-  todo
-
   @Test
   public void set() {
   }
