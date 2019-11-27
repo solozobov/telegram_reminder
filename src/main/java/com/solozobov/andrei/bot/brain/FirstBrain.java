@@ -167,8 +167,9 @@ public class FirstBrain extends BaseBrain {
 
   private final ButtonAction<Notification> SELECT_REPEAT_INTERVAL = new AuthorizedButtonAction<Notification>("a", NOTIFICATION) {
     protected void perform3(TelegramBot bot, Message message, Notification n) {
+      final ZoneId timeZone = getUserTimeZone();
       bot.editMessage(message, "Выберите интервал повторения напоминания", dayHourMinuteSelector(
-          getUserDefaultNotificationIntervalMinutes(),
+          Duration.between(ZonedDateTime.now(timeZone), ZonedDateTime.of(n.date, n.time, timeZone)).toMinutes(),
           newMinutesToDisplay -> SELECT_REPEAT_INTERVAL.getActionKey(new Notification(n.messageId, n.date, n.time, n.repeated, newMinutesToDisplay.intValue())),
           selectedRepeatIntervalMinutes -> UPDATE.getActionKey(new Notification(n.messageId, n.date, n.time, true, selectedRepeatIntervalMinutes.intValue()))
       ));

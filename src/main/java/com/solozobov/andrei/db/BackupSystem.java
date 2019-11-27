@@ -53,7 +53,8 @@ public class BackupSystem {
       TelegramBot bot,
       SettingSystem settingSystem,
       @Value("${remember.working.folder}") String workingFolder,
-      @Value("${remember.backup.interval.minutes}") long backupIntervalMinutes
+      @Value("${remember.backup.interval.minutes}") long backupIntervalMinutes,
+      @Value("${remember.backup.enabled}") boolean enabled
   ) {
     this.dataSource = dataSource;
     this.bot = bot;
@@ -69,14 +70,16 @@ public class BackupSystem {
       backupFolder.mkdir();
     }
     //noinspection ConstantConditions
-    backupsReplicationQueue = stream(backupFolder
+    this.backupsReplicationQueue = stream(backupFolder
         .listFiles(this::isBackupFile))
         .map(f -> Pair.of(parseBackupFileName(f), f))
         .sorted(comparing(p -> p.first))
         .map(Pair::second)
         .collect(Collectors.toCollection(LinkedList::new));
 
-    new LoopThread(this.getClass().getSimpleName(), this::makeBackup, MINUTES.toMillis(backupIntervalMinutes)).start();
+    if (enabled) {
+      new LoopThread(this.getClass().getSimpleName(), this::makeBackup, MINUTES.toMillis(backupIntervalMinutes)).start();
+    }
   }
 
   private void makeBackup() {

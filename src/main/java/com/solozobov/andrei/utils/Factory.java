@@ -17,7 +17,7 @@ public abstract class Factory {
   }
 
   @SafeVarargs
-  public static <T> Set<T> set(T ... elements) {
+  public static <T> Set<T> hashSet(T ... elements) {
     return new HashSet<>(Arrays.asList(elements));
   }
 

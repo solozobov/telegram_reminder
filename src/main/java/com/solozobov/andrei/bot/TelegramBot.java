@@ -1,5 +1,6 @@
 package com.solozobov.andrei.bot;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.solozobov.andrei.RememberException;
 import com.solozobov.andrei.db.SettingSystem;
 import com.solozobov.andrei.utils.Exceptions;
@@ -45,7 +46,7 @@ import static java.util.stream.Collectors.toList;
  *
  * checking ip-address https://blocklist.rkn.gov.ru
  */
-@Component
+@Component("telegramBot")
 @SuppressWarnings("WeakerAccess")
 public class TelegramBot extends BaseBot {
   public static final String ADMIN_LOGIN = "mimimotik";
@@ -55,18 +56,6 @@ public class TelegramBot extends BaseBot {
   private static final Logger LOG = LoggerFactory.getLogger(TelegramBot.class);
 
   private final SettingSystem settingSystem;
-  private final String botName;
-  private final String botToken;
-
-  @Override
-  public String getBotUsername() {
-    return botName;
-  }
-
-  @Override
-  public String getBotToken() {
-    return botToken;
-  }
 
   @Override
   public void onUpdateReceived(Update update) {
@@ -253,12 +242,11 @@ public class TelegramBot extends BaseBot {
       TelegramBotsApi telegramBotsApi,
       SettingSystem settingSystem,
       @Value("${remember.bot.name}") String botName,
-      @Value("${remember.bot.token}") String botToken
+      @Value("${remember.bot.token}") String botToken,
+      @Value("${remember.telegram.discovery.enabled}") boolean discoveryEnabled
   ) {
-    super(botName, botToken, createOptions(botName, botToken));
+    super(botName, botToken, discoveryEnabled ? createOptions(botName, botToken) : new DefaultBotOptions());
     this.settingSystem = settingSystem;
-    this.botName = botName;
-    this.botToken = botToken;
     try {
       telegramBotsApi.registerBot(this);
     } catch (Exception e) {
@@ -266,9 +254,9 @@ public class TelegramBot extends BaseBot {
     }
   }
 
-  private static DefaultBotOptions createOptions(String botName, String botToken) {
+  @VisibleForTesting protected static DefaultBotOptions createOptions(String botName, String botToken) {
     try {
-      final InetAddress inetAddress = fundLocalAddress(botName, botToken);
+      final InetAddress inetAddress = findLocalAddress(botName, botToken);
       LOG.info("Using local address " + inetAddress + " to connect to Telegram");
       return createOptions(RequestConfig.custom().setLocalAddress(inetAddress));
     } catch (SocketException e) {
@@ -276,7 +264,7 @@ public class TelegramBot extends BaseBot {
     }
   }
 
-  private static @NotNull InetAddress fundLocalAddress(String botName, String botToken) throws SocketException {
+  private static @NotNull InetAddress findLocalAddress(String botName, String botToken) throws SocketException {
     final List<InetAddress> addresses = list(NetworkInterface.getNetworkInterfaces())
         .stream()
         .filter(networkInterface -> {
