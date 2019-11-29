@@ -43,8 +43,8 @@ public class FirstBrain extends BaseBrain {
             getUserDefaultNotificationIntervalMinutes()
         );
         bot.reply(message, "Когда напомнить?", keyboard(
-          list(button("конкретная дата и время", SELECT_DATE_AND_TIME.getActionKey(notification))),
-          list(button("через промежуток времени", SELECT_TIME_INTERVAL_FROM_NOW.getActionKey(notification)))
+          list(button("\uD83D\uDDD3️конкретная дата и время", SELECT_DATE_AND_TIME.getActionKey(notification))),
+          list(button("⏳через промежуток времени", SELECT_TIME_INTERVAL_FROM_NOW.getActionKey(notification)))
         ));
       }
     };
@@ -63,7 +63,7 @@ public class FirstBrain extends BaseBrain {
       ButtonAction<Notification> updateAction,
       ButtonAction<Notification> saveAction
   ) {
-    bot.editMessage(message, "Выберите дату", dateSelector(
+    bot.editMessage(message, "\uD83D\uDDD3️Выберите дату", dateSelector(
         n.date,
         getUserTimeZone(),
         newDateToDisplay -> updateAction.getActionKey(new Notification(n.messageId, newDateToDisplay, n.time, n.repeated, n.repeatIntervalMinutes)),
@@ -78,7 +78,7 @@ public class FirstBrain extends BaseBrain {
   };
 
   private void selectTime(TelegramBot bot, Message message, Notification n, ButtonAction<Notification> saveAction) {
-    bot.editMessage(message, "Выберите время", timeSelector(
+    bot.editMessage(message, "⏰Выберите время", timeSelector(
         n.date,
         getUserDefaultNotificationTime(),
         getUserTimeZone(),
@@ -132,16 +132,16 @@ public class FirstBrain extends BaseBrain {
       final LocalDateTime utcNotificationTime = userSelectedDateTime.withZoneSameInstant(UTC).toLocalDateTime();
       notificationRepository.update(message.getChatId(), n.messageId, utcNotificationTime, n.repeatIntervalMinutes);
       final List<List<InlineKeyboardButton>> buttons = new ArrayList<>(6);
-      buttons.add(list(button("дату напоминания", UPDATE_DATE.getActionKey(n))));
-      buttons.add(list(button("время напоминания", UPDATE_TIME.getActionKey(n))));
-      buttons.add(list(button("промежуток напоминания", UPDATE_TIME_INTERVAL_FROM_NOW.getActionKey(n))));
+      buttons.add(list(button("\uD83D\uDDD3️️дату напоминания", UPDATE_DATE.getActionKey(n))));
+      buttons.add(list(button("⏰время напоминания", UPDATE_TIME.getActionKey(n))));
+      buttons.add(list(button("⏳промежуток напоминания", UPDATE_TIME_INTERVAL_FROM_NOW.getActionKey(n))));
       if (n.repeated) {
         buttons.add(list(button("интервал повторения", SELECT_REPEAT_INTERVAL.getActionKey(n))));
         buttons.add(list(button("перестать повторять", UPDATE.getActionKey(new Notification(n.messageId, n.date, n.time, false, n.repeatIntervalMinutes)))));
       } else {
-        buttons.add(list(button("сделать повторяющимся", SELECT_REPEAT_INTERVAL.getActionKey(n))));
+        buttons.add(list(button("\uD83D\uDD01сделать повторяющимся", SELECT_REPEAT_INTERVAL.getActionKey(n))));
       }
-      buttons.add(list(button("закончить редактирование", CLOSE_EDIT.getActionKey(n))));
+      buttons.add(list(button("❌закончить редактирование", CLOSE_EDIT.getActionKey(n))));
 
       bot.editMessage(message, createDescription(n) + "\nЧто изменить?", keyboard(buttons));
     }

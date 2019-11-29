@@ -1,5 +1,6 @@
 package com.solozobov.andrei.utils;
 
+import com.solozobov.andrei.RememberException;
 import com.solozobov.andrei.bot.TelegramBot;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,7 +28,13 @@ public class Transactions {
   }
 
   public static void executeSqlInTransaction(Supplier<String> description, DataSource dataSource, String sql) {
-    inTransaction(description, dataSource, connection -> {executeSql(connection, sql);});
+    inTransaction(description, dataSource, connection -> {
+      try {
+        executeSql(connection, sql);
+      } catch (Exception e) {
+        throw new RememberException(e, "failed SQL '" + sql + "'");
+      }
+    });
   }
 
   public static void executeSql(Connection connection, String sql) throws SQLException {

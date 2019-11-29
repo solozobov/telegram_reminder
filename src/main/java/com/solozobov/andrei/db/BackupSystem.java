@@ -26,9 +26,6 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 
 /**
  * solozobov on 23.07.2019
- *
- * H2 shell:
- * java -cp ~/.m2/repository/com/h2database/h2/1.4.199/h2-1.4.199.jar org.h2.tools.Shell -url 'jdbc:h2:/root/remember/db;DATABASE_TO_UPPER=false' -driver org.h2.Driver -user -password
  */
 @Component
 public class BackupSystem {
