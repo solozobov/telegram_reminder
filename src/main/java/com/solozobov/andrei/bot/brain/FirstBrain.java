@@ -43,14 +43,14 @@ public class FirstBrain extends BaseBrain {
             getUserDefaultNotificationIntervalMinutes()
         );
         bot.reply(message, "Когда напомнить?", keyboard(
-          list(button("\uD83D\uDDD3️конкретная дата и время", SELECT_DATE_AND_TIME.getActionKey(notification))),
-          list(button("⏳через промежуток времени", SELECT_TIME_INTERVAL_FROM_NOW.getActionKey(notification)))
+            list(button("\uD83D\uDDD3️ конкретная дата и время", SELECT_DATE_AND_TIME.getActionKey(notification))),
+            list(button("⏳ через промежуток времени", SELECT_TIME_INTERVAL_FROM_NOW.getActionKey(notification)))
         ));
       }
     };
   }
 
-  private final ButtonAction<Notification> SELECT_DATE_AND_TIME = new AuthorizedButtonAction<Notification>("2", NOTIFICATION) {
+  private final ButtonAction<Notification> SELECT_DATE_AND_TIME = new AuthorizedButtonAction<Notification>("set_date", NOTIFICATION) {
     protected void perform3(TelegramBot bot, Message message, Notification n) {
       selectDate(bot, message, n, SELECT_DATE_AND_TIME, SELECT_TIME);
     }
@@ -63,7 +63,7 @@ public class FirstBrain extends BaseBrain {
       ButtonAction<Notification> updateAction,
       ButtonAction<Notification> saveAction
   ) {
-    bot.editMessage(message, "\uD83D\uDDD3️Выберите дату", dateSelector(
+    bot.editMessage(message, "\uD83D\uDDD3️ Выберите дату", dateSelector(
         n.date,
         getUserTimeZone(),
         newDateToDisplay -> updateAction.getActionKey(new Notification(n.messageId, newDateToDisplay, n.time, n.repeated, n.repeatIntervalMinutes)),
@@ -71,14 +71,14 @@ public class FirstBrain extends BaseBrain {
     ));
   }
 
-  private final ButtonAction<Notification> SELECT_TIME = new AuthorizedButtonAction<Notification>("3", NOTIFICATION) {
+  private final ButtonAction<Notification> SELECT_TIME = new AuthorizedButtonAction<Notification>("set_time", NOTIFICATION) {
     protected void perform3(TelegramBot bot, Message message, Notification n) {
       selectTime(bot, message, n, CREATE);
     }
   };
 
   private void selectTime(TelegramBot bot, Message message, Notification n, ButtonAction<Notification> saveAction) {
-    bot.editMessage(message, "⏰Выберите время", timeSelector(
+    bot.editMessage(message, "⏰ Выберите время", timeSelector(
         n.date,
         getUserDefaultNotificationTime(),
         getUserTimeZone(),
@@ -86,7 +86,7 @@ public class FirstBrain extends BaseBrain {
     ));
   }
 
-  private final ButtonAction<Notification> SELECT_TIME_INTERVAL_FROM_NOW = new AuthorizedButtonAction<Notification>("4", NOTIFICATION) {
+  private final ButtonAction<Notification> SELECT_TIME_INTERVAL_FROM_NOW = new AuthorizedButtonAction<Notification>("set_interval", NOTIFICATION) {
     protected void perform3(TelegramBot bot, Message message, Notification n) {
       selectTimeIntervalFromNow(bot, message, n, SELECT_TIME_INTERVAL_FROM_NOW, CREATE);
     }
@@ -101,6 +101,7 @@ public class FirstBrain extends BaseBrain {
   ) {
     final ZoneId timeZone = getUserTimeZone();
     bot.editMessage(message, "Через сколько времени напомнить?", dayHourMinuteSelector(
+        "через",
         Duration.between(ZonedDateTime.now(timeZone), ZonedDateTime.of(n.date, n.time, timeZone)).toMinutes(),
         newMinutesToDisplay -> {
           final ZonedDateTime dateTime = ZonedDateTime.now(timeZone).plusMinutes(newMinutesToDisplay);
@@ -113,72 +114,81 @@ public class FirstBrain extends BaseBrain {
     ));
   }
 
-  private final ButtonAction<Notification> CREATE = new AuthorizedButtonAction<Notification>("5", NOTIFICATION) {
+  private final ButtonAction<Notification> CREATE = new AuthorizedButtonAction<Notification>("create", NOTIFICATION) {
     protected void perform3(TelegramBot bot, Message message, Notification n) {
       final ZonedDateTime userSelectedDateTime = ZonedDateTime.of(n.date, n.time, getUserTimeZone());
       final LocalDateTime utcNotificationTime = userSelectedDateTime.withZoneSameInstant(UTC).toLocalDateTime();
       notificationRepository.create(message.getChatId(), n.messageId, utcNotificationTime);
 
       bot.editMessage(
-          message, createDescription(n),
-          keyboard(button("редактировать", UPDATE.getActionKey(n)))
+          message,
+          createDescription(n),
+          keyboard(button("редактировать", EDIT.getActionKey(n)))
       );
     }
   };
 
-  private final ButtonAction<Notification> UPDATE = new AuthorizedButtonAction<Notification>("6", NOTIFICATION) {
+  private final ButtonAction<Notification> EDIT = new AuthorizedButtonAction<Notification>("edit", NOTIFICATION) {
     protected void perform3(TelegramBot bot, Message message, Notification n) {
       final ZonedDateTime userSelectedDateTime = ZonedDateTime.of(n.date, n.time, getUserTimeZone());
       final LocalDateTime utcNotificationTime = userSelectedDateTime.withZoneSameInstant(UTC).toLocalDateTime();
       notificationRepository.update(message.getChatId(), n.messageId, utcNotificationTime, n.repeatIntervalMinutes);
       final List<List<InlineKeyboardButton>> buttons = new ArrayList<>(6);
-      buttons.add(list(button("\uD83D\uDDD3️️дату напоминания", UPDATE_DATE.getActionKey(n))));
-      buttons.add(list(button("⏰время напоминания", UPDATE_TIME.getActionKey(n))));
-      buttons.add(list(button("⏳промежуток напоминания", UPDATE_TIME_INTERVAL_FROM_NOW.getActionKey(n))));
+      buttons.add(list(button("\uD83D\uDDD3️️ дату напоминания", EDIT_DATE.getActionKey(n))));
+      buttons.add(list(button("⏰ время напоминания", EDIT_TIME.getActionKey(n))));
+      buttons.add(list(button("⏳ время до напоминания", EDIT_TIME_INTERVAL_FROM_NOW.getActionKey(n))));
       if (n.repeated) {
-        buttons.add(list(button("интервал повторения", SELECT_REPEAT_INTERVAL.getActionKey(n))));
-        buttons.add(list(button("перестать повторять", UPDATE.getActionKey(new Notification(n.messageId, n.date, n.time, false, n.repeatIntervalMinutes)))));
+        buttons.add(list(button("⏳ интервал повторения", EDIT_REPEAT_INTERVAL.getActionKey(n))));
+        buttons.add(list(button("⏹️ перестать повторять", EDIT.getActionKey(new Notification(n.messageId, n.date, n.time, false, n.repeatIntervalMinutes)))));
       } else {
-        buttons.add(list(button("\uD83D\uDD01сделать повторяющимся", SELECT_REPEAT_INTERVAL.getActionKey(n))));
+        buttons.add(list(button("\uD83D\uDD01 сделать повторяющимся", EDIT_REPEAT_INTERVAL.getActionKey(n))));
       }
-      buttons.add(list(button("❌закончить редактирование", CLOSE_EDIT.getActionKey(n))));
+      buttons.add(list(button("❌ закончить редактирование", COLLAPSE.getActionKey(n))));
+      buttons.add(list(button("\uD83D\uDDD1️ удалить напоминание", DELETE.getActionKey(n))));
 
       bot.editMessage(message, createDescription(n) + "\nЧто изменить?", keyboard(buttons));
     }
   };
 
-  private final ButtonAction<Notification> UPDATE_DATE = new AuthorizedButtonAction<Notification>("7", NOTIFICATION) {
+  private final ButtonAction<Notification> EDIT_DATE = new AuthorizedButtonAction<Notification>("edit_date", NOTIFICATION) {
     protected void perform3(TelegramBot bot, Message message, Notification n) {
-      selectDate(bot, message, n, UPDATE_DATE, UPDATE);
+      selectDate(bot, message, n, EDIT_DATE, EDIT);
     }
   };
 
-  private final ButtonAction<Notification> UPDATE_TIME = new AuthorizedButtonAction<Notification>("8", NOTIFICATION) {
+  private final ButtonAction<Notification> EDIT_TIME = new AuthorizedButtonAction<Notification>("edit_time", NOTIFICATION) {
     protected void perform3(TelegramBot bot, Message message, Notification n) {
-      selectTime(bot, message, n, UPDATE);
+      selectTime(bot, message, n, EDIT);
     }
   };
 
-  private final ButtonAction<Notification> UPDATE_TIME_INTERVAL_FROM_NOW = new AuthorizedButtonAction<Notification>("9", NOTIFICATION) {
+  private final ButtonAction<Notification> EDIT_TIME_INTERVAL_FROM_NOW = new AuthorizedButtonAction<Notification>("edit_interval", NOTIFICATION) {
     protected void perform3(TelegramBot bot, Message message, Notification n) {
-      selectTimeIntervalFromNow(bot, message, n, UPDATE_TIME_INTERVAL_FROM_NOW, UPDATE);
+      selectTimeIntervalFromNow(bot, message, n, EDIT_TIME_INTERVAL_FROM_NOW, EDIT);
     }
   };
 
-  private final ButtonAction<Notification> SELECT_REPEAT_INTERVAL = new AuthorizedButtonAction<Notification>("a", NOTIFICATION) {
+  private final ButtonAction<Notification> EDIT_REPEAT_INTERVAL = new AuthorizedButtonAction<Notification>("edit_repeat", NOTIFICATION) {
     protected void perform3(TelegramBot bot, Message message, Notification n) {
-      final ZoneId timeZone = getUserTimeZone();
       bot.editMessage(message, "Выберите интервал повторения напоминания", dayHourMinuteSelector(
-          Duration.between(ZonedDateTime.now(timeZone), ZonedDateTime.of(n.date, n.time, timeZone)).toMinutes(),
-          newMinutesToDisplay -> SELECT_REPEAT_INTERVAL.getActionKey(new Notification(n.messageId, n.date, n.time, n.repeated, newMinutesToDisplay.intValue())),
-          selectedRepeatIntervalMinutes -> UPDATE.getActionKey(new Notification(n.messageId, n.date, n.time, true, selectedRepeatIntervalMinutes.intValue()))
+          "каждые",
+          n.repeatIntervalMinutes,
+          newMinutesToDisplay -> EDIT_REPEAT_INTERVAL.getActionKey(new Notification(n.messageId, n.date, n.time, n.repeated, newMinutesToDisplay.intValue())),
+          selectedRepeatIntervalMinutes -> EDIT.getActionKey(new Notification(n.messageId, n.date, n.time, true, selectedRepeatIntervalMinutes.intValue()))
       ));
     }
   };
 
-  private final ButtonAction<Notification> CLOSE_EDIT = new AuthorizedButtonAction<Notification>("b", NOTIFICATION) {
+  private final ButtonAction<Notification> COLLAPSE = new AuthorizedButtonAction<Notification>("collapse", NOTIFICATION) {
     protected void perform3(TelegramBot bot, Message message, Notification n) {
-      bot.editMessage(message, createDescription(n), keyboard(button("редактировать", UPDATE.getActionKey(n))));
+      bot.editMessage(message, createDescription(n), keyboard(button("редактировать", EDIT.getActionKey(n))));
+    }
+  };
+
+  private final ButtonAction<Notification> DELETE = new AuthorizedButtonAction<Notification>("delete", NOTIFICATION) {
+    protected void perform3(TelegramBot bot, Message message, Notification n) {
+      notificationRepository.delete(message.getChatId(), n.messageId);
+      bot.editMessage(message, "напоминание удалено", keyboard(button("восстановить", CREATE.getActionKey(n))));
     }
   };
 

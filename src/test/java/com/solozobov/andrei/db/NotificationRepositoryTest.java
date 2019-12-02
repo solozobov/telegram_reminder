@@ -95,4 +95,16 @@ public class NotificationRepositoryTest extends DomainTestCase {
     assertNull(notificationRepository.get(chatId3, messageId3));
     check(id4, chatId4, messageId4, time, repeatIntervalMinutes);
   }
+
+  @Test
+  public void delete() {
+    final long chatId = rUniqueLong();
+    final int messageId = rUniqueInt();
+    final LocalDateTime time = LocalDateTime.now(UTC).minusHours(1);
+    final long id = notificationRepository.create(chatId, messageId, time);
+    check(id, chatId, messageId, time, null);
+
+    notificationRepository.delete(chatId, messageId);
+    assertNull(notificationRepository.get(chatId, messageId));
+  }
 }

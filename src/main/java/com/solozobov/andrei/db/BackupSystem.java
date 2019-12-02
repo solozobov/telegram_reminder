@@ -75,7 +75,7 @@ public class BackupSystem {
         .collect(Collectors.toCollection(LinkedList::new));
 
     if (enabled) {
-      new LoopThread(this.getClass().getSimpleName(), this::makeBackup, MINUTES.toMillis(backupIntervalMinutes)).start();
+      new LoopThread("database_backup", this::makeBackup, MINUTES.toMillis(backupIntervalMinutes)).start();
     }
   }
 

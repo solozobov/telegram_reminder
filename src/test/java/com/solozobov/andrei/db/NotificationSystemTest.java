@@ -37,7 +37,7 @@ public class NotificationSystemTest extends DomainTestCase {
     final long id3 = notificationRepository.create(chatId3, messageId3, future);
 
     telegramBot.reset();
-    notificationSystem.run();
+    notificationSystem.loop();
     telegramBot.assertForwarded(Pair.of(chatId1, messageId1), Pair.of(chatId2, messageId2));
 
     assertNull(notificationRepository.get(chatId1, messageId1));

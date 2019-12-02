@@ -70,6 +70,13 @@ public class NotificationRepository {
       .execute();
   }
 
+  public void delete(Long chatId, int messageId) {
+    db.delete(NOTIFICATIONS)
+      .where(NOTIFICATIONS.CHAT_ID.eq(chatId))
+      .and(NOTIFICATIONS.MESSAGE_ID.eq(messageId))
+      .execute();
+  }
+
   @Autowired
   public NotificationRepository(DSLContext db) {
     this.db = db;

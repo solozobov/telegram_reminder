@@ -18,6 +18,7 @@
         <java.version>1.8</java.version>
         <jooq.version>3.11.7</jooq.version>
         <h2.version>1.4.199</h2.version>
+        <logback.version>1.2.3</logback.version>
     </properties>
 
     <dependencies>
@@ -44,12 +45,12 @@
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
-            <version>1.0.13</version>
+            <version>${logback.version}</version>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-core</artifactId>
-            <version>1.0.13</version>
+            <version>${logback.version}</version>
         </dependency>
         <!--<dependency>-->
             <!--<groupId>org.postgresql</groupId>-->

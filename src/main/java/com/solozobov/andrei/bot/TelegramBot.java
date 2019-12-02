@@ -104,6 +104,9 @@ public class TelegramBot extends BaseBot {
 
       LOG.error("Unknown button action '" + buttonAction + "'");
     }
+    else {
+      LOG.info("Unknown update " + update);
+    }
   }
 
   public void write(Message message, String text) {

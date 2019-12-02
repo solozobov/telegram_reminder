@@ -184,6 +184,7 @@ public class Keyboards {
 //  }
 
   public static InlineKeyboardMarkup dayHourMinuteSelector(
+      String descriptionPrefix,
       long currentMinutes,
       Function<Long, String> minutesSwitchAction,
       Function<Long, String> minutesSelectAction
@@ -198,7 +199,7 @@ public class Keyboards {
     final String text = Naming.timeAccusative(currentMinutes);
 
     final List<List<InlineKeyboardButton>> result = new ArrayList<>();
-    result.add(list(button("через " + text, minutesSelectAction.apply(currentMinutes))));
+    result.add(list(button(descriptionPrefix + " " + text, minutesSelectAction.apply(currentMinutes))));
     result.add(list(
         button("+" + Naming.daysAccusative(daysBigStep), minutesSwitchAction.apply(currentMinutes + DAYS.toMinutes(daysBigStep))),
         button("+" + Naming.hoursAccusative(hoursBigStep), minutesSwitchAction.apply(currentMinutes + HOURS.toMinutes(hoursBigStep))),
