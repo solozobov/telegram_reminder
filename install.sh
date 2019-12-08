@@ -28,3 +28,17 @@ sql () {
   rm -rf ~/h2_shell
 }" >> ~/.profile
 
+echo "
+sqlprod () {
+  rm -rf ~/h2_shell
+  mkdir ~/h2_shell
+  cp ~/remember/db.mv.db ~/h2_shell/db.mv.db
+  cp ~/.m2/repository/com/h2database/h2/*/h2*.jar ~/h2_shell/h2.jar
+  pushd ~/h2_shell
+  kill -9 `jps | grep remember | cut -d ' ' -f 1`
+  java -cp h2*.jar org.h2.tools.Shell -url jdbc:h2:/root/h2_shell/db -driver org.h2.Driver -user $1 -password $2
+  ~/remember/./update.sh
+  popd
+  rm -rf ~/h2_shell
+}" >> ~/.profile
+

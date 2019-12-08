@@ -18,7 +18,6 @@ import java.time.*;
 import static com.solozobov.andrei.bot.Keyboards.*;
 import static com.solozobov.andrei.bot.TelegramBot.ADMIN_LOGIN;
 import static com.solozobov.andrei.bot.brain.Dtos.*;
-import static com.solozobov.andrei.utils.TelegramFormat.bold;
 import static com.solozobov.andrei.utils.TelegramFormat.userLink;
 
 
@@ -62,9 +61,10 @@ public class BaseBrain {
     new MessageAction("/start") {
       protected void perform2(TelegramBot bot, Message message) {
         LOG.info("/start " + message);
-        bot.write(message, bold("Здравствуйте!") + "\nЯ бот Напоминатор, умею напоминать о чём угодно в удобное вам время.\nУмею напомининать разово, например о походе в театр, или регулярно, например о днях рождения или об окончании месяца.");
         final UsersRecord user = getUser(message);
-        if (!user.getApproved()) {
+        if (user.getApproved()) {
+          bot.write(message, "Напишите или перешлите мне сообщение чтобы настроить напоминание.");
+        } else {
           bot.write(message, "Кажется, вы новый пользователь. Поговорите сначала с " + userLink("Андреем", ADMIN_LOGIN) + ".\nОн вам расскажет, насколько я стабильно работаю, чего от меня стоит ожидать, а чего не стоит.");
           final UsersRecord admin = userRepository.getByLogin(ADMIN_LOGIN);
           bot.write(admin.getChatId(), "Новый пользователь хочет добавиться " + userLink(user.getFirstName() + " " + user.getLastName(), user.getChatId()), keyboard(button("принять", APPROVE_USER.getActionKey(new UserId(user)))));

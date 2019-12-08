@@ -35,10 +35,12 @@ public class FirstBrain extends BaseBrain {
   {
     new AuthorizedMessageAction(null) {
       protected void perform3(TelegramBot bot, Message message) {
+        final ZoneId timeZone = getUserTimeZone();
+        final ZonedDateTime date = ZonedDateTime.now(timeZone).plusMinutes(getUserDefaultNotificationOffsetMinutes());
         final Notification notification = new Notification(
             message.getMessageId(),
-            LocalDate.now(getUserTimeZone()),
-            LocalTime.now(getUserTimeZone()),
+            date.toLocalDate(),
+            date.toLocalTime(),
             false,
             getUserDefaultNotificationIntervalMinutes()
         );
