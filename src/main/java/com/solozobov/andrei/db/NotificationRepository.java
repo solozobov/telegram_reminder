@@ -60,7 +60,7 @@ public class NotificationRepository {
       .execute();
   }
 
-  public void update(long chatId, int messageId, LocalDateTime dateTimeUtc, int repeatIntervalMinutes) {
+  public void update(long chatId, int messageId, LocalDateTime dateTimeUtc, @Nullable Integer repeatIntervalMinutes) {
     db.update(NOTIFICATIONS)
       .set(NOTIFICATIONS.TIMESTAMP_UTC, dateTimeUtc)
       .set(NOTIFICATIONS.FORESTALL_MINUTES, 0)

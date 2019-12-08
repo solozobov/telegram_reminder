@@ -134,7 +134,7 @@ public class FirstBrain extends BaseBrain {
     protected void perform3(TelegramBot bot, Message message, Notification n) {
       final ZonedDateTime userSelectedDateTime = ZonedDateTime.of(n.date, n.time, getUserTimeZone());
       final LocalDateTime utcNotificationTime = userSelectedDateTime.withZoneSameInstant(UTC).toLocalDateTime();
-      notificationRepository.update(message.getChatId(), n.messageId, utcNotificationTime, n.repeatIntervalMinutes);
+      notificationRepository.update(message.getChatId(), n.messageId, utcNotificationTime, n.repeated ? n.repeatIntervalMinutes : null);
       final List<List<InlineKeyboardButton>> buttons = new ArrayList<>(6);
       buttons.add(list(button("\uD83D\uDDD3️️ дату напоминания", EDIT_DATE.getActionKey(n))));
       buttons.add(list(button("⏰ время напоминания", EDIT_TIME.getActionKey(n))));

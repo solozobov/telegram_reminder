@@ -1,7 +1,6 @@
 package com.solozobov.andrei.utils;
 
 import com.solozobov.andrei.RememberException;
-import org.jetbrains.annotations.NotNull;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -110,9 +109,9 @@ public class Naming {
     long minutes = timeMinutes % 60;
     long hours = (timeMinutes / 60) % 24;
     long days = timeMinutes / 60 / 24;
-    return (days == 0 ? "" : " " + Naming.daysAccusative(days))
-         + (hours == 0 ? "" : " " + Naming.hoursAccusative(hours))
-         + (minutes == 0 ? "" : " " + Naming.minutesAccusative(minutes));
+    return (days == 0 ? "" : Naming.daysAccusative(days))
+         + (hours == 0 ? "" : (days == 0 ? "" : " ") + Naming.hoursAccusative(hours))
+         + (minutes == 0 ? "" : (days == 0 && hours == 0 ? "" : " ") + Naming.minutesAccusative(minutes));
   }
 
 }
