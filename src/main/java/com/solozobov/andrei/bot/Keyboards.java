@@ -2,6 +2,7 @@ package com.solozobov.andrei.bot;
 
 import com.solozobov.andrei.utils.Naming;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
@@ -13,6 +14,8 @@ import java.util.function.Function;
 
 import static com.solozobov.andrei.bot.TelegramBot.NO_ACTION_BUTTON;
 import static com.solozobov.andrei.utils.Factory.list;
+import static java.lang.Integer.parseInt;
+import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.*;
 import static java.util.concurrent.TimeUnit.MINUTES;
 
@@ -40,23 +43,23 @@ public class Keyboards {
   }
 
   @SafeVarargs
-  public static InlineKeyboardMarkup keyboard(List<InlineKeyboardButton> ... buttons) {
+  public static InlineKeyboardMarkup keyboard(@NotNull List<InlineKeyboardButton> ... buttons) {
     return keyboard(list(buttons));
   }
 
-  public static InlineKeyboardMarkup keyboard(InlineKeyboardButton ... buttons) {
+  public static InlineKeyboardMarkup keyboard(@NotNull InlineKeyboardButton ... buttons) {
     return keyboard(list(list(buttons)));
   }
 
-  public static InlineKeyboardMarkup keyboard(List<List<InlineKeyboardButton>> buttons) {
+  public static InlineKeyboardMarkup keyboard(@NotNull List<List<InlineKeyboardButton>> buttons) {
     return new InlineKeyboardMarkup().setKeyboard(buttons);
   }
 
   public static InlineKeyboardMarkup dateSelector(
-      LocalDate selectedDate,
-      ZoneId userTimeZone,
-      Function<LocalDate, String> dateSwitchAction,
-      Function<LocalDate, String> dateSelectAction
+      @NotNull LocalDate selectedDate,
+      @NotNull ZoneId userTimeZone,
+      @NotNull Function<LocalDate, String> dateSwitchAction,
+      @NotNull Function<LocalDate, String> dateSelectAction
   ) {
     final LocalDate userCurrentDate = LocalDate.now(userTimeZone);
 
@@ -98,11 +101,11 @@ public class Keyboards {
     return new InlineKeyboardMarkup().setKeyboard(result);
   }
 
-  public static InlineKeyboardMarkup timeSelector(
-      LocalDate date,
-      LocalTime defaultNotificationTime,
-      ZoneId userTimeZone,
-      Function<LocalTime, String> timeSelectAction
+  public static InlineKeyboardMarkup timeSelectorOld(
+      @NotNull LocalDate date,
+      @NotNull LocalTime defaultNotificationTime,
+      @NotNull ZoneId userTimeZone,
+      @NotNull Function<LocalTime, String> timeSelectAction
   ) {
     ZonedDateTime time;
     if (LocalDate.now(userTimeZone).equals(date)) {
@@ -141,60 +144,63 @@ public class Keyboards {
     return new InlineKeyboardMarkup().setKeyboard(result);
   }
 
-//  public static InlineKeyboardMarkup timeSelector2(
-//      LocalDate date,
-//      ZoneId userTimeZone,
-//      Function<LocalTime, String> timeSelectAction
-//  ) {
-//    ZonedDateTime time;
-//    if (LocalDate.now(userTimeZone).equals(date)) {
-//      time = ZonedDateTime.now(userTimeZone).plusHours(1).withMinute(0).withSecond(0).withNano(0);
-//    } else {
-//      time = ZonedDateTime.of(date, LocalTime.of(0, 0), userTimeZone);
-//    }
-//
-//    final List<List<InlineKeyboardButton>> result = new ArrayList<>();
-//    if (ZonedDateTime.of(date, defaultNotificationTime, userTimeZone).compareTo(time) > 0) {
-//      result.add(list(button(
-//          defaultNotificationTime.format(TIME_FORMATTER),
-//          timeSelectAction.apply(defaultNotificationTime)
-//      )));
-//    }
-//
-//    final ZonedDateTime nextDate = time.plusDays(1).withHour(0);
-//    List<InlineKeyboardButton> line = new ArrayList<>();
-//    int i = 1;
-//    while(time.compareTo(nextDate) < 0) {
-//      line.add(button(time.getHour() + ":00", timeSelectAction.apply(time.toLocalTime())));
-//      if (i % 6 == 0) {
-//        result.add(line);
-//        line = new ArrayList<>();
-//      }
-//      time = time.plusHours(1);
-//      i++;
-//    }
-//    if (!line.isEmpty()) {
-//      result.add(line);
-//    } else if (result.isEmpty()) {
-//      line.add(button("23:59", timeSelectAction.apply(LocalTime.of(23, 59))));
-//      result.add(line);
-//    }
-//
-//    return new InlineKeyboardMarkup().setKeyboard(result);
-//  }
+  public static InlineKeyboardMarkup timeInput(
+      @Nullable String currentInput,
+      @NotNull Function<String, String> nextInput,
+      @NotNull Function<LocalTime, String> selectTime
+  ) {
+    final List<List<InlineKeyboardButton>> result = new ArrayList<>();
+    if (currentInput == null || currentInput.isEmpty()) {
+      result.add(list(button("00:00", selectTime.apply(LocalTime.of(0, 0)))));
+      result.add(list(button("1", nextInput.apply("1")),  button("2", nextInput.apply("2")),  button("3", nextInput.apply("03"))));
+      result.add(list(button("4", nextInput.apply("04")), button("5", nextInput.apply("05")), button("6", nextInput.apply("06"))));
+      result.add(list(button("7", nextInput.apply("07")), button("8", nextInput.apply("08")), button("9", nextInput.apply("09"))));
+      result.add(list(button(":00", selectTime.apply(LocalTime.of(0, 0))), button("0", nextInput.apply("0")), button(":30", selectTime.apply(LocalTime.of(0, 30)))));
+    } else if (currentInput.length() == 1) {
+      final int hour = parseInt(currentInput) * 10;
+      result.add(list(button(currentInput + "0:00", selectTime.apply(LocalTime.of(hour, 0)))));
+      if ("2".equals(currentInput)) {
+        result.add(list(button("1", nextInput.apply("21")), button("2", nextInput.apply("22")), button("3", nextInput.apply("23"))));
+        result.add(list(empty(), empty(), empty()));
+        result.add(list(empty(), empty(), empty()));
+        result.add(list(button(":00", selectTime.apply(LocalTime.of(2, 0))), button("0", nextInput.apply("20")), button(":30", selectTime.apply(LocalTime.of(2, 30)))));
+      } else {
+        result.add(list(button("1", nextInput.apply(currentInput + "1")), button("2", nextInput.apply(currentInput + "2")), button("3", nextInput.apply(currentInput + "3"))));
+        result.add(list(button("4", nextInput.apply(currentInput + "4")), button("5", nextInput.apply(currentInput + "5")), button("6", nextInput.apply(currentInput + "6"))));
+        result.add(list(button("7", nextInput.apply(currentInput + "7")), button("8", nextInput.apply(currentInput + "8")), button("9", nextInput.apply(currentInput + "9"))));
+        result.add(list(button(":00", selectTime.apply(LocalTime.of(hour, 0))), button("0", nextInput.apply(currentInput + "0")), button(":30", selectTime.apply(LocalTime.of(hour, 30)))));
+      }
+    } else if (currentInput.length() == 2) {
+      final int hour = parseInt(currentInput);
+      result.add(list(button(currentInput + ":00", selectTime.apply(LocalTime.of(hour, 0)))));
+      result.add(list(button("1", nextInput.apply(currentInput + "1")), button("2", nextInput.apply(currentInput + "2")), button("3", nextInput.apply(currentInput + "3"))));
+      result.add(list(button("4", nextInput.apply(currentInput + "4")), button("5", nextInput.apply(currentInput + "5")), button("6", selectTime.apply(LocalTime.of(hour, 6)))));
+      result.add(list(button("7", selectTime.apply(LocalTime.of(hour, 7))), button("8", selectTime.apply(LocalTime.of(hour, 8))), button("9", selectTime.apply(LocalTime.of(hour, 9)))));
+      result.add(list(button(":00", selectTime.apply(LocalTime.of(hour, 0))), button("0", nextInput.apply(currentInput + "0")), button(":30", selectTime.apply(LocalTime.of(hour, 30)))));
+    } else {
+      final int hour = parseInt(currentInput.substring(0, 2));
+      final int minute = parseInt(currentInput.substring(2)) * 10;
+      result.add(list(button(hour + ":" + format("%02d", minute), selectTime.apply(LocalTime.of(hour, minute)))));
+      result.add(list(button("1", selectTime.apply(LocalTime.of(hour, minute + 1))), button("2", selectTime.apply(LocalTime.of(hour, minute + 2))), button("3", selectTime.apply(LocalTime.of(hour, minute + 3)))));
+      result.add(list(button("4", selectTime.apply(LocalTime.of(hour, minute + 4))), button("5", selectTime.apply(LocalTime.of(hour, minute + 5))), button("6", selectTime.apply(LocalTime.of(hour, minute + 6)))));
+      result.add(list(button("7", selectTime.apply(LocalTime.of(hour, minute + 7))), button("8", selectTime.apply(LocalTime.of(hour, minute + 8))), button("9", selectTime.apply(LocalTime.of(hour, minute + 9)))));
+      result.add(list(button(":00", selectTime.apply(LocalTime.of(hour, 0))), button("0", selectTime.apply(LocalTime.of(hour, minute))), button(":30", selectTime.apply(LocalTime.of(hour, 30)))));
+    }
+    return new InlineKeyboardMarkup().setKeyboard(result);
+  }
 
   public static InlineKeyboardMarkup dayHourMinuteSelector(
-      String descriptionPrefix,
+      @NotNull String descriptionPrefix,
       long currentMinutes,
-      Function<Long, String> minutesSwitchAction,
-      Function<Long, String> minutesSelectAction
+      @NotNull Function<Long, String> minutesSwitchAction,
+      @NotNull Function<Long, String> minutesSelectAction
   ) {
-    long daysBigStep = 10;
-    long hoursBigStep = 4;
-    long minutesBigStep = 10;
-    long daysSmallStep = 1;
-    long hoursSmallStep = 1;
-    long minutesSmallStep = 1;
+    final long daysBigStep = 10;
+    final long hoursBigStep = 4;
+    final long minutesBigStep = 10;
+    final long daysSmallStep = 1;
+    final long hoursSmallStep = 1;
+    final long minutesSmallStep = 1;
 
     final String text = Naming.timeAccusative(currentMinutes);
 

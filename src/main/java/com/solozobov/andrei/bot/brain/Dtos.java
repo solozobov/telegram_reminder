@@ -2,6 +2,7 @@ package com.solozobov.andrei.bot.brain;
 
 import com.solozobov.andrei.utils.Serializer;
 import org.jooq.db.tables.records.UsersRecord;
+import org.json.JSONObject;
 import org.telegram.telegrambots.meta.api.objects.Message;
 
 import java.time.LocalDate;
@@ -150,44 +151,72 @@ public class Dtos {
     public final LocalTime time;
     public final boolean repeated;
     public final int repeatIntervalMinutes;
+    public final String input;
 
     public Notification(
         int messageId,
         LocalDate date,
         LocalTime time,
         boolean repeated,
-        int repeatIntervalMinutes
+        int repeatIntervalMinutes,
+        String input
     ) {
       this.messageId = messageId;
       this.date = date;
       this.time = time;
       this.repeated = repeated;
       this.repeatIntervalMinutes = repeatIntervalMinutes;
+      this.input = input;
     }
   }
 
   public static final Serializer<Notification> NOTIFICATION = new Serializer<Notification>() {
 
     @Override
-    public String serialize(Notification notification) {
-      return notification.messageId + DELIMITER
-           + DATE_FORMATTER.format(notification.date) + DELIMITER
-           + TIME_FORMATTER.format(notification.time) + DELIMITER
-           + (notification.repeated ? "r" : "_") + DELIMITER
-           + notification.repeatIntervalMinutes;
+    public String serialize(Notification n) {
+      return n.messageId + DELIMITER
+           + DATE_FORMATTER.format(n.date) + DELIMITER
+           + TIME_FORMATTER.format(n.time) + DELIMITER
+           + (n.repeated ? "r" : "_") + DELIMITER
+           + n.repeatIntervalMinutes + DELIMITER
+           + n.input;
     }
 
     @Override
     public Notification deserialize(String string) {
-      final String[] parts = string.split(DELIMITER);
+      final String[] parts = string.split(DELIMITER, 6);
       return new Notification(
           parseInt(parts[0]),
           LocalDate.parse(parts[1], DATE_FORMATTER),
           LocalTime.parse(parts[2], TIME_FORMATTER),
           "r".equals(parts[3]),
-          parseInt(parts[4])
+          parseInt(parts[4]),
+          parts[5]
       );
     }
   };
 
+  public static final Serializer<JSONObject> JSON = new Serializer<JSONObject>() {
+    @Override
+    public String serialize(JSONObject json) {
+      return json.toString();
+    }
+
+    @Override
+    public JSONObject deserialize(String json) {
+      return new JSONObject(json);
+    }
+  };
+
+  public static final Serializer<String> STRING = new Serializer<String>() {
+    @Override
+    public String serialize(String str) {
+      return str;
+    }
+
+    @Override
+    public String deserialize(String str) {
+      return str;
+    }
+  };
 }

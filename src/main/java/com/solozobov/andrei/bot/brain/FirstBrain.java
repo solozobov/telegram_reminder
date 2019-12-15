@@ -17,8 +17,7 @@ import java.util.List;
 import static com.solozobov.andrei.bot.brain.Dtos.*;
 import static com.solozobov.andrei.bot.Keyboards.*;
 import static com.solozobov.andrei.utils.Factory.list;
-import static com.solozobov.andrei.utils.Naming.dayOfWeek;
-import static com.solozobov.andrei.utils.Naming.monthGenitive;
+import static com.solozobov.andrei.utils.Naming.*;
 
 
 /**
@@ -42,7 +41,8 @@ public class FirstBrain extends BaseBrain {
             date.toLocalDate(),
             date.toLocalTime(),
             false,
-            getUserDefaultNotificationIntervalMinutes()
+            getUserDefaultNotificationIntervalMinutes(),
+            ""
         );
         bot.reply(message, "Когда напомнить?", keyboard(
             list(button("\uD83D\uDDD3️ конкретная дата и время", SELECT_DATE_AND_TIME.getActionKey(notification))),
@@ -54,7 +54,7 @@ public class FirstBrain extends BaseBrain {
 
   private final ButtonAction<Notification> SELECT_DATE_AND_TIME = new AuthorizedButtonAction<Notification>("set_date", NOTIFICATION) {
     protected void perform3(TelegramBot bot, Message message, Notification n) {
-      selectDate(bot, message, n, SELECT_DATE_AND_TIME, SELECT_TIME);
+      selectDate(bot, message, n, SELECT_DATE_AND_TIME, SET_TIME);
     }
   };
 
@@ -68,23 +68,28 @@ public class FirstBrain extends BaseBrain {
     bot.editMessage(message, "\uD83D\uDDD3️ Выберите дату", dateSelector(
         n.date,
         getUserTimeZone(),
-        newDateToDisplay -> updateAction.getActionKey(new Notification(n.messageId, newDateToDisplay, n.time, n.repeated, n.repeatIntervalMinutes)),
-        selectedDate -> saveAction.getActionKey(new Notification(n.messageId, selectedDate, n.time, n.repeated, n.repeatIntervalMinutes))
+        newDateToDisplay -> updateAction.getActionKey(new Notification(n.messageId, newDateToDisplay, n.time, n.repeated, n.repeatIntervalMinutes, n.input)),
+        selectedDate -> saveAction.getActionKey(new Notification(n.messageId, selectedDate, n.time, n.repeated, n.repeatIntervalMinutes, n.input))
     ));
   }
 
-  private final ButtonAction<Notification> SELECT_TIME = new AuthorizedButtonAction<Notification>("set_time", NOTIFICATION) {
+  private final ButtonAction<Notification> SET_TIME = new AuthorizedButtonAction<Notification>("set_time", NOTIFICATION) {
     protected void perform3(TelegramBot bot, Message message, Notification n) {
-      selectTime(bot, message, n, CREATE);
+      setTime(bot, message, n, SET_TIME, CREATE);
     }
   };
 
-  private void selectTime(TelegramBot bot, Message message, Notification n, ButtonAction<Notification> saveAction) {
-    bot.editMessage(message, "⏰ Выберите время", timeSelector(
-        n.date,
-        getUserDefaultNotificationTime(),
-        getUserTimeZone(),
-        selectedTime -> saveAction.getActionKey(new Notification(n.messageId, n.date, selectedTime, n.repeated, n.repeatIntervalMinutes))
+  private void setTime(
+      TelegramBot bot,
+      Message message,
+      Notification n,
+      ButtonAction<Notification> updateInput,
+      ButtonAction<Notification> saveTime
+  ) {
+    bot.editMessage(message, "⏰ Введите время", timeInput(
+        n.input,
+        input -> updateInput.getActionKey(new Notification(n.messageId, n.date, n.time, n.repeated, n.repeatIntervalMinutes, input)),
+        time -> saveTime.getActionKey(new Notification(n.messageId, n.date, time, n.repeated, n.repeatIntervalMinutes, ""))
     ));
   }
 
@@ -107,11 +112,11 @@ public class FirstBrain extends BaseBrain {
         Duration.between(ZonedDateTime.now(timeZone), ZonedDateTime.of(n.date, n.time, timeZone)).toMinutes(),
         newMinutesToDisplay -> {
           final ZonedDateTime dateTime = ZonedDateTime.now(timeZone).plusMinutes(newMinutesToDisplay);
-          return updateAction.getActionKey(new Notification(n.messageId, dateTime.toLocalDate(), dateTime.toLocalTime(), n.repeated, n.repeatIntervalMinutes));
+          return updateAction.getActionKey(new Notification(n.messageId, dateTime.toLocalDate(), dateTime.toLocalTime(), n.repeated, n.repeatIntervalMinutes, n.input));
         },
         selectedMinutes -> {
           final ZonedDateTime dateTime = ZonedDateTime.now(timeZone).plusMinutes(selectedMinutes);
-          return saveAction.getActionKey(new Notification(n.messageId, dateTime.toLocalDate(), dateTime.toLocalTime(), n.repeated, n.repeatIntervalMinutes));
+          return saveAction.getActionKey(new Notification(n.messageId, dateTime.toLocalDate(), dateTime.toLocalTime(), n.repeated, n.repeatIntervalMinutes, n.input));
         }
     ));
   }
@@ -137,11 +142,11 @@ public class FirstBrain extends BaseBrain {
       notificationRepository.update(message.getChatId(), n.messageId, utcNotificationTime, n.repeated ? n.repeatIntervalMinutes : null);
       final List<List<InlineKeyboardButton>> buttons = new ArrayList<>(6);
       buttons.add(list(button("\uD83D\uDDD3️️ дату напоминания", EDIT_DATE.getActionKey(n))));
-      buttons.add(list(button("⏰ время напоминания", EDIT_TIME.getActionKey(n))));
+      buttons.add(list(button("⏰ время напоминания", EDIT_TIME.getActionKey(new Notification(n.messageId, n.date, n.time, n.repeated, n.repeatIntervalMinutes, "")))));
       buttons.add(list(button("⏳ время до напоминания", EDIT_TIME_INTERVAL_FROM_NOW.getActionKey(n))));
       if (n.repeated) {
         buttons.add(list(button("⏳ интервал повторения", EDIT_REPEAT_INTERVAL.getActionKey(n))));
-        buttons.add(list(button("⏹️ перестать повторять", EDIT.getActionKey(new Notification(n.messageId, n.date, n.time, false, n.repeatIntervalMinutes)))));
+        buttons.add(list(button("⏹️ перестать повторять", EDIT.getActionKey(new Notification(n.messageId, n.date, n.time, false, n.repeatIntervalMinutes, n.input)))));
       } else {
         buttons.add(list(button("\uD83D\uDD01 сделать повторяющимся", EDIT_REPEAT_INTERVAL.getActionKey(n))));
       }
@@ -160,7 +165,7 @@ public class FirstBrain extends BaseBrain {
 
   private final ButtonAction<Notification> EDIT_TIME = new AuthorizedButtonAction<Notification>("edit_time", NOTIFICATION) {
     protected void perform3(TelegramBot bot, Message message, Notification n) {
-      selectTime(bot, message, n, EDIT);
+      setTime(bot, message, n, EDIT_TIME, EDIT);
     }
   };
 
@@ -175,8 +180,8 @@ public class FirstBrain extends BaseBrain {
       bot.editMessage(message, "Выберите интервал повторения напоминания", dayHourMinuteSelector(
           "каждые",
           n.repeatIntervalMinutes,
-          newMinutesToDisplay -> EDIT_REPEAT_INTERVAL.getActionKey(new Notification(n.messageId, n.date, n.time, n.repeated, newMinutesToDisplay.intValue())),
-          selectedRepeatIntervalMinutes -> EDIT.getActionKey(new Notification(n.messageId, n.date, n.time, true, selectedRepeatIntervalMinutes.intValue()))
+          newMinutesToDisplay -> EDIT_REPEAT_INTERVAL.getActionKey(new Notification(n.messageId, n.date, n.time, n.repeated, newMinutesToDisplay.intValue(), n.input)),
+          selectedRepeatIntervalMinutes -> EDIT.getActionKey(new Notification(n.messageId, n.date, n.time, true, selectedRepeatIntervalMinutes.intValue(), n.input))
       ));
     }
   };
@@ -203,7 +208,7 @@ public class FirstBrain extends BaseBrain {
         userSelectedDateTime.getDayOfMonth(),
         monthGenitive(userSelectedDateTime.getMonth()),
         userSelectedDateTime.getYear(),
-        n.repeated ? " с повторением каждые " + n.repeatIntervalMinutes + " минут" : ""
+        n.repeated ? " с повторением раз в " + timeAccusative(n.repeatIntervalMinutes) : ""
     );
   }
 }
