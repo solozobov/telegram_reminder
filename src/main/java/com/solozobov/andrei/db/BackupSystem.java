@@ -35,7 +35,7 @@ public class BackupSystem {
   private static final Logger LOG = LoggerFactory.getLogger(BackupSystem.class);
 
   private static final String BACKUP_FILE_NAME_PREFIX = "backup_";
-  private static final DateTimeFormatter BACKUP_FILE_NAME_FORMAT = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
+  private static final DateTimeFormatter BACKUP_FILE_NAME_FORMAT = DateTimeFormatter.ofPattern("yyyy.MM.dd_HH:MM");
   private static final String BACKUP_FILE_NAME_SUFFIX = ".zip";
 
   private final DataSource dataSource;

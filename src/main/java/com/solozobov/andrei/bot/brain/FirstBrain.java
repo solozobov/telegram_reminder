@@ -150,8 +150,8 @@ public class FirstBrain extends BaseBrain {
       } else {
         buttons.add(list(button("\uD83D\uDD01 сделать повторяющимся", EDIT_REPEAT_INTERVAL.getActionKey(n))));
       }
-      buttons.add(list(button("❌ закончить редактирование", COLLAPSE.getActionKey(n))));
       buttons.add(list(button("\uD83D\uDDD1️ удалить напоминание", DELETE.getActionKey(n))));
+      buttons.add(list(button("\uD83D\uDD3D свернуть меню", COLLAPSE.getActionKey(n))));
 
       bot.editMessage(message, createDescription(n) + "\nЧто изменить?", keyboard(buttons));
     }

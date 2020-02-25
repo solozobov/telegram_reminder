@@ -4,6 +4,7 @@ import com.solozobov.andrei.RememberException;
 import com.solozobov.andrei.utils.Serializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.telegram.telegrambots.meta.api.objects.Chat;
 import org.telegram.telegrambots.meta.api.objects.Message;
 
 import java.util.HashSet;
@@ -30,7 +31,9 @@ public abstract class ButtonAction<Data> {
   }
 
   public void perform(TelegramBot bot, Message message, String actionKey) {
-    LOG.info(message.getChat().getUserName() + " pressed Button '" + actionKey + "'");
+    final Chat chat = message.getChat();
+    final String userName = chat.getUserName() + "@ " + chat.getFirstName() + " " + chat.getLastName();
+    LOG.info(userName + " pressed Button '" + actionKey + "'");
     perform2(bot, message, serializer.deserialize(actionKey.substring(key.length() + 1)));
   }
 
