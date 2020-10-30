@@ -19,6 +19,7 @@ import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.api.methods.ForwardMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -216,6 +217,15 @@ public class TelegramBot extends BaseBot {
     } catch (TelegramApiException e) {
       throw new RememberException(
           e, "Failed editing message in chat #" + message.getChatId() + (keyboard == null ? "" : " and keyboard"));
+    }
+  }
+
+  public void deleteMessage(Message message) {
+    try {
+      this.execute(new DeleteMessage(message.getChatId(), message.getMessageId()));
+    } catch (TelegramApiException e) {
+      throw new RememberException(
+          e, "Failed deleting message #" + message.getMessageId() + " in chat #" + message.getChatId());
     }
   }
 

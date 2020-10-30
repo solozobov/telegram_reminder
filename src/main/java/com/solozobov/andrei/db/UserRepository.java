@@ -1,7 +1,9 @@
 package com.solozobov.andrei.db;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.jetbrains.annotations.NotNull;
 import org.jooq.DSLContext;
+import org.jooq.UpdateSetMoreStep;
 import org.jooq.db.tables.records.UsersRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,64 +29,82 @@ public class UserRepository {
 
   private final Map<String,UsersRecord> login2user = new HashMap<>();
 
+  public UsersRecord getById(long userId) {
+    return db.selectFrom(USERS).where(USERS.ID.eq(userId)).fetchOne();
+  }
+
   public @NotNull UsersRecord getByLogin(@NotNull String login) {
     return db.selectFrom(USERS).where(USERS.LOGIN.eq(login)).fetchOne();
   }
 
-  public @NotNull UsersRecord createOrUpdateUser(@NotNull Chat chat) {
-    final String login = chat.getUserName();
-    UsersRecord existing = login2user.get(login);
-    if (existing == null) {
-      existing = getOrCreate(chat);
-      login2user.put(login, existing);
-    } else {
-      if (chat.getId() != null && !chat.getId().equals(existing.getChatId())
-       || chat.getFirstName() != null && !chat.getFirstName().equals(existing.getFirstName())
-       || chat.getLastName() != null && !chat.getLastName().equals(existing.getLastName())
-      ) {
-        existing = db.update(USERS)
-          .set(USERS.CHAT_ID, chat.getId())
-          .set(USERS.FIRST_NAME, chat.getFirstName())
-          .set(USERS.LAST_NAME, chat.getLastName())
-          .where(USERS.CHAT_ID.eq(chat.getId()))
-          .returning()
-          .fetchOne();
-        login2user.put(login, existing);
-      }
-    }
-
-    return existing;
+  public @NotNull UsersRecord getOrCreateOrUpdateUser(@NotNull Chat chat) {
+    return getOrCreateOrUpdateUser(chat.getId(), chat.getUserName(), chat.getFirstName(), chat.getLastName());
   }
 
-  public void approve(long userId) {
-    db.update(USERS)
-      .set(USERS.APPROVED, true)
-      .where(USERS.ID.eq(userId))
+  @VisibleForTesting @NotNull UsersRecord getOrCreateOrUpdateUser(long chatId, String login, String firstName, String lastName) {
+    UsersRecord cached = login2user.get(login);
+
+    if (cached != null) {
+      cached = updateMetadata(cached, chatId, login, firstName, lastName);
+      return cached;
+    }
+
+    UsersRecord existing = getByChatId(chatId);
+    if (existing != null) {
+      existing = updateMetadata(existing, chatId, login, firstName, lastName);
+      login2user.put(login, existing);
+      return existing;
+    }
+
+    final UsersRecord created = db.insertInto(USERS, USERS.CHAT_ID, USERS.LOGIN, USERS.FIRST_NAME, USERS.LAST_NAME, USERS.APPROVED)
+      .values(chatId, login, firstName, lastName, false)
+      .onDuplicateKeyIgnore()
       .returning()
       .fetchOne();
-    final UsersRecord user = get(userId);
+    login2user.put(login, created);
+    LOG.info("New user registered " + login);
+
+    return created;
+  }
+
+  public void changeApprove(long userId, boolean approve) {
+    db.update(USERS)
+      .set(USERS.APPROVED, approve)
+      .where(USERS.ID.eq(userId))
+      .execute();
+    final UsersRecord user = getById(userId);
     login2user.put(user.getLogin(), user);
   }
 
-  private @NotNull UsersRecord getOrCreate(@NotNull Chat chat) {
-    final UsersRecord existing = get(chat);
-    if (existing != null) {
-      return existing;
+  @VisibleForTesting @NotNull UsersRecord updateMetadata(
+      @NotNull UsersRecord user,
+      long chatId,
+      String login,
+      String firstName,
+      String lastName
+  ) {
+    final boolean chatIdChanged = !((Long) chatId).equals(user.getChatId());
+    final boolean firstNameChanged = firstName != null && !firstName.equals(user.getFirstName());
+    final boolean lastNameChanged = lastName != null && !lastName.equals(user.getLastName());
+    if (chatIdChanged || firstNameChanged || lastNameChanged) {
+      UpdateSetMoreStep<UsersRecord> update = db.update(USERS).set(USERS.CHAT_ID, chatId);
+      if (firstNameChanged) {
+        update = update.set(USERS.FIRST_NAME, firstName);
+      }
+      if (lastNameChanged) {
+        update = update.set(USERS.LAST_NAME, lastName);
+      }
+      update.where(USERS.ID.eq(user.getId())).execute();
+      final UsersRecord updated = getById(user.getId());
+      login2user.put(login, updated);
+      return updated;
+    } else {
+      return user;
     }
-    db.insertInto(USERS, USERS.CHAT_ID, USERS.LOGIN, USERS.FIRST_NAME, USERS.LAST_NAME, USERS.APPROVED)
-      .values(chat.getId(), chat.getUserName(), chat.getFirstName(), chat.getLastName(), false)
-      .onDuplicateKeyIgnore()
-      .execute();
-    LOG.info("New user registered " + chat);
-    return get(chat);
   }
 
-  private UsersRecord get(long userId) {
-    return db.selectFrom(USERS).where(USERS.ID.eq(userId)).fetchOne();
-  }
-
-  private UsersRecord get(@NotNull Chat chat) {
-    return db.selectFrom(USERS).where(USERS.CHAT_ID.eq(chat.getId())).fetchOne();
+  private UsersRecord getByChatId(long chatId) {
+    return db.selectFrom(USERS).where(USERS.CHAT_ID.eq(chatId)).fetchOne();
   }
 
   @Autowired

@@ -2,6 +2,7 @@ package com.solozobov.andrei.db;
 
 import com.solozobov.andrei.DomainTestCase;
 import com.solozobov.andrei.utils.Pair;
+import org.jooq.db.tables.records.NotificationsRecord;
 import org.junit.Test;
 
 import java.time.LocalDateTime;
@@ -29,19 +30,19 @@ public class NotificationSystemTest extends DomainTestCase {
     notificationRepository.create(chatId1, messageId1, expired);
 
     // expired and repeated ==> must be rescheduled
-    final long id2 = notificationRepository.create(chatId2, messageId2, expired);
+    final NotificationsRecord notification2 = notificationRepository.create(chatId2, messageId2, expired);
     final int repeatIntervalMinutes = 90;
     notificationRepository.update(chatId2, messageId2, expired, repeatIntervalMinutes);
 
     // not expired ==> untouched
-    final long id3 = notificationRepository.create(chatId3, messageId3, future);
+    final NotificationsRecord notification3 = notificationRepository.create(chatId3, messageId3, future);
 
     telegramBot.reset();
     notificationSystem.loop();
     telegramBot.assertForwarded(Pair.of(chatId1, messageId1), Pair.of(chatId2, messageId2));
 
     assertNull(notificationRepository.get(chatId1, messageId1));
-    check(notificationRepository.get(chatId2, messageId2), id2, chatId2, messageId2, expired.plusMinutes(repeatIntervalMinutes), repeatIntervalMinutes);
-    check(notificationRepository.get(chatId3, messageId3), id3, chatId3, messageId3, future, null);
+    check(notificationRepository.get(chatId2, messageId2), notification2.getId(), chatId2, messageId2, expired.plusMinutes(repeatIntervalMinutes), repeatIntervalMinutes);
+    check(notification3, chatId3, messageId3, future, null);
   }
 }

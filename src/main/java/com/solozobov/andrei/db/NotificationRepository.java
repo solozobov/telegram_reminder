@@ -3,6 +3,7 @@ package com.solozobov.andrei.db;
 import com.solozobov.andrei.db.dto.NotificationDto;
 import org.jetbrains.annotations.Nullable;
 import org.jooq.DSLContext;
+import org.jooq.db.tables.records.NotificationsRecord;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -24,11 +25,11 @@ public class NotificationRepository {
 
   private final DSLContext db;
 
-  public long create(long chatId, int messageId, LocalDateTime dateTimeUtc) {
+  public NotificationsRecord create(long chatId, int messageId, LocalDateTime dateTimeUtc) {
     return db.insertInto(NOTIFICATIONS, NOTIFICATIONS.CHAT_ID, NOTIFICATIONS.MESSAGE_ID, NOTIFICATIONS.TIMESTAMP_UTC, NOTIFICATIONS.FORESTALL_MINUTES)
       .values(chatId, messageId, dateTimeUtc, 0)
-      .returning(NOTIFICATIONS.ID)
-      .fetchOne().value1();
+      .returning()
+      .fetchOne();
   }
 
   public @Nullable NotificationDto get(long chatId, int messageId) {

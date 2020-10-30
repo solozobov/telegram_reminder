@@ -43,7 +43,7 @@ public class BaseBrain {
       if (user.getApproved()) {
         perform3(bot, message);
       } else if (ADMIN_LOGIN.equals(message.getChat().getUserName())) {
-        userRepository.approve(user.getId());
+        userRepository.changeApprove(user.getId(), true);
         perform3(bot, message);
       } else {
         bot.write(message, "Поговорите сначала с " + userLink("Андреем", ADMIN_LOGIN) + ".\nБез его разрешения я не могу вам помогать.");
@@ -67,7 +67,7 @@ public class BaseBrain {
         } else {
           bot.write(message, "Кажется, вы новый пользователь. Поговорите сначала с " + userLink("Андреем", ADMIN_LOGIN) + ".\nОн вам расскажет, насколько я стабильно работаю, чего от меня стоит ожидать, а чего не стоит.");
           final UsersRecord admin = userRepository.getByLogin(ADMIN_LOGIN);
-          bot.write(admin.getChatId(), "Новый пользователь хочет добавиться " + userLink(user.getFirstName() + " " + user.getLastName(), user.getChatId()), keyboard(button("принять", APPROVE_USER.getActionKey(new UserId(user)))));
+          bot.write(admin.getChatId(), "Новый пользователь хочет добавиться " + userLink(user.getFirstName() + " " + user.getLastName(), user.getLogin()), keyboard(button("принять", APPROVE_USER.getActionKey(new UserId(user)))));
         }
       }
     };
@@ -90,7 +90,7 @@ public class BaseBrain {
       if (user.getApproved()) {
         perform3(bot, message, data);
       } else if (ADMIN_LOGIN.equals(message.getChat().getUserName())) {
-        userRepository.approve(user.getId());
+        userRepository.changeApprove(user.getId(), true);
         perform3(bot, message, data);
       } else {
         bot.write(message, "Поговорите сначала с " + userLink("Андреем", ADMIN_LOGIN) + ".\nБез его разрешения я не могу вам помогать.");
@@ -107,8 +107,20 @@ public class BaseBrain {
   private final ButtonAction<UserId> APPROVE_USER = new ButtonAction<UserId>("1", USER_ID) {
     public void perform2(TelegramBot bot, Message message, UserId userId) {
       if (ADMIN_LOGIN.equals(message.getChat().getUserName())) {
-        userRepository.approve(userId.id);
-        bot.editMessage(message, message.getText());
+        userRepository.changeApprove(userId.id, true);
+        bot.editMessage(message, message.getText(), keyboard(button("отозвать", UNAPPROVE_USER.getActionKey(userId))));
+        bot.write(userRepository.getById(userId.id).getChatId(), "Администратор дал добро. Попробуйте написать мне текст напоминания.");
+      } else {
+        bot.write(message, "Вы не администратор");
+      }
+    }
+  };
+
+  private final ButtonAction<UserId> UNAPPROVE_USER = new ButtonAction<UserId>("2", USER_ID) {
+    public void perform2(TelegramBot bot, Message message, UserId userId) {
+      if (ADMIN_LOGIN.equals(message.getChat().getUserName())) {
+        userRepository.changeApprove(userId.id, false);
+        bot.editMessage(message, message.getText(), keyboard(button("принять", APPROVE_USER.getActionKey(userId))));
       } else {
         bot.write(message, "Вы не администратор");
       }
@@ -116,7 +128,7 @@ public class BaseBrain {
   };
 
   protected @NotNull UsersRecord getUser(Message message) {
-    return userRepository.createOrUpdateUser(message.getChat());
+    return userRepository.getOrCreateOrUpdateUser(message.getChat());
   }
 
   protected ZoneId getUserTimeZone() {
