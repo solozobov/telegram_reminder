@@ -15,5 +15,5 @@ do
 done
 rm pid || echo
 rm db.lock.db || echo
-nohup /usr/bin/java -jar $work_dir/remember/telegram_reminder/target/remember-1.0-SNAPSHOT.jar com.solozobov.andrei.Application --spring.config.location=file:$work_dir/remember/application.properties &
+nohup /usr/bin/java -jar $work_dir/telegram_reminder/target/remember-1.0-SNAPSHOT.jar com.solozobov.andrei.Application --spring.config.location=file:$work_dir/application.properties &
 echo $! >> pid
