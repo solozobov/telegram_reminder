@@ -1,22 +1,25 @@
 #!/usr/bin/env bash
 set -ex
 
-mkdir ~/remember
-echo>~/remember/application.properties
 apt-get update
 apt-get install -y openjdk-8-jdk maven git
+
+work_dir=`pwd`
+mkdir remember
+cd remember
+touch application.properties
 git config --global credential.helper store
 git clone https://github.com/solozobov/telegram_reminder.git
 cd telegram_reminder
 mvn clean install -Dmaven.test.skip=true -Dremember.db.url=jdbc:h2:~/remember/db -Dremember.db.user=remember -Dremember.db.password=remember
 
-cd ~/remember
-cp ~/telegram_reminder/update.sh update.sh
+cd ..
+cp telegram_reminder/update.sh update.sh
 chmod 700 update.sh
 nohup /usr/bin/java -jar ~/telegram_reminder/target/remember-1.0-SNAPSHOT.jar com.solozobov.andrei.Application --spring.config.location=file:/root/remember/application.properties &
 echo $! >> pid
 
-echo "
+echo "§
 sql () {
   rm -rf ~/h2_shell
   mkdir ~/h2_shell
